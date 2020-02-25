@@ -1,0 +1,14 @@
+{
+	"name": "blob",
+	"erdAbbreviation": "<blb>",
+	"dtdAbbreviation": "{blb}",
+	"parentType": "binary",
+	"useSample": false,
+	"hiddenOnEntity": "view",
+	"jsonType": {
+		"order": 2
+	},
+	"defaultValues": {
+		"primaryKey": false
+	}
+}

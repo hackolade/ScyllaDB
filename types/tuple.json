@@ -1,0 +1,16 @@
+{
+	"name": "tuple",
+	"erdAbbreviation": "<tup>",
+	"dtdAbbreviation": "[...]",
+	"parentType": "array",
+	"useSample": true,
+	"hiddenOnEntity": "view",
+	"defaultValues": {
+		"properties": [],
+		"primaryKey": false,
+		"additionalItems": true,
+		"minItems": "",
+		"maxItems": "",
+		"uniqueItems": false
+	}
+}

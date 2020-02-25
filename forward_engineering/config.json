@@ -1,0 +1,16 @@
+{
+	"extension": "cql",
+	"filterName": "Cassandra Query Language",
+	"namePrefix": "Cassandra",
+	"hasUpdateScript": false,
+	"level": {
+		"entity": true,
+		"container": true,
+		"view": true
+	},
+	"applyScriptToInstance": true,
+	"compMode": {
+		"entity": true,
+		"container": false
+	}
+}

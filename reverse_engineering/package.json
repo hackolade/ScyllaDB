@@ -1,0 +1,30 @@
+{
+  "name": "ScyllaDB",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Hackolade",
+  "dependencies": {
+    "cassandra-driver": "^4.3.1"
+  },
+  "systemKeyspaces": [
+    "cfs",
+    "cfs_archive",
+    "dse_leases",
+    "dse_perf",
+    "dse_security",
+    "dse_system",
+    "dsefs",
+    "HiveMetaStore",
+    "OpsCenter",
+    "solr_admin",
+    "spark_system",
+    "system",
+    "system_auth",
+    "system_distributed",
+    "system_schema",
+    "system_traces",
+    "system_views",
+    "system_virtual_schema"
+  ],
+  "installed": true
+}

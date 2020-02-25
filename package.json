@@ -1,0 +1,31 @@
+{
+	"name": "ScyllaDB",
+	"version": "0.1.0",
+	"versionDate": "2020-02-25",
+	"author": "hackolade",
+	"engines": {
+		"hackolade": "3.6.6",
+		"hackoladePlugin": "1.2.0"
+	},
+	"contributes": {
+		"target": {
+			"applicationTarget": "ScyllaDB",
+			"title": "ScyllaDB",
+			"versions": [
+				"2019.x"
+			]
+		},
+		"features": {
+			"views": true,
+			"nestedCollections": false,
+			"disablePatternField": false,
+			"enableForwardEngineering": true,
+			"disableMultipleTypes": true,
+			"enableReverseEngineering": true,
+			"disableChoices": true,
+			"enableJsonType": true,
+			"enableArrayItemName": true
+		}
+	},
+	"description": "Hackolade plugin for ScyllaDB"
+}
