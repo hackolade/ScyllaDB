@@ -149,5 +149,16 @@
 				}
 			}
 		]
+	}, {
+		"lowerTab": "Advanced",
+		"structure": [
+			{
+				"inputLabel": "Request timeout (ms)",
+				"inputKeyword": "requestTimeout",
+				"inputType": "text",
+				"inputPlaceholder": "60 000",
+				"description": "Default: 60 sec"
+			}
+		]
 	}
 ]
