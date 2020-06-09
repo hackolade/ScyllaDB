@@ -156,8 +156,8 @@
 				"inputLabel": "Request timeout (ms)",
 				"inputKeyword": "requestTimeout",
 				"inputType": "text",
-				"inputPlaceholder": "60 000",
-				"description": "Default: 60 sec"
+				"inputPlaceholder": "60000",
+				"description": "Default: 60 sec (60k ms)"
 			}
 		]
 	}
