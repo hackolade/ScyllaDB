@@ -9,10 +9,12 @@ const { getAlterScript } = require('./helpers/updateHelper');
 const { getViewScript } = require('./helpers/viewHelper');
 const { getCreateTableScript } = require('./helpers/createHelper');
 const { applyToInstance, testConnection } = require('./helpers/dbConnectionService/index');
+const { setDependencies } = require('./helpers/appDependencies');
 
 module.exports = {
-	generateScript(data, logger, callback) {
+	generateScript(data, logger, callback, app) {
 		try {
+			setDependencies(app);
 			data.udtTypeMap = getUdtMap([data.modelDefinitions, data.externalDefinitions]);
 			data.jsonSchema = JSON.parse(data.jsonSchema);
 			data.modelDefinitions = sortUdt(JSON.parse(data.modelDefinitions));
@@ -34,7 +36,8 @@ module.exports = {
 		}
 	},
 
-	generateViewScript(data, logger, callback) {
+	generateViewScript(data, logger, callback, app) {
+		setDependencies(app);
 		const viewSchema = JSON.parse(data.jsonSchema || '{}');
 
 		const script = getViewScript({
@@ -48,8 +51,9 @@ module.exports = {
 		callback(null, script)
 	},
 
-	generateContainerScript(data, logger, callback) {
+	generateContainerScript(data, logger, callback, app) {
 		try {
+			setDependencies(app);
 			if (data.isUpdateScript) {
 				let result = '';
 				data.udtTypeMap = getUdtMap([data.modelDefinitions, data.externalDefinitions]);
