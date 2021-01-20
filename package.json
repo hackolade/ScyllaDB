@@ -25,7 +25,12 @@
 			"disableChoices": true,
 			"enableJsonType": true,
 			"enableArrayItemName": true,
-			"FEScriptCommentsSupported": true
+			"FEScriptCommentsSupported": true,
+			"relationships": {
+				"compositeRelationships": {
+					"allowRelationshipsForNonPrimaryKey": true
+				}
+			}
 		}
 	},
 	"description": "Hackolade plugin for ScyllaDB"
