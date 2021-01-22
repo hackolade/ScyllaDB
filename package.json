@@ -1,10 +1,10 @@
 {
 	"name": "ScyllaDB",
-	"version": "0.1.8",
-	"versionDate": "2020-10-23",
+	"version": "0.1.9",
+	"versionDate": "2021-01-22",
 	"author": "hackolade",
 	"engines": {
-		"hackolade": "3.6.6",
+		"hackolade": "4.3.0",
 		"hackoladePlugin": "1.2.0"
 	},
 	"contributes": {
@@ -25,7 +25,12 @@
 			"disableChoices": true,
 			"enableJsonType": true,
 			"enableArrayItemName": true,
-			"FEScriptCommentsSupported": true
+			"FEScriptCommentsSupported": true,
+			"relationships": {
+				"compositeRelationships": {
+					"allowRelationshipsForNonPrimaryKey": true
+				}
+			}
 		}
 	},
 	"description": "Hackolade plugin for ScyllaDB"

@@ -10,6 +10,19 @@
 				
 			},
 			{
+				"inputLabel": "Installation",
+				"inputKeyword": "clusterType",
+				"inputType": "select",
+				"defaultValue": "",
+				"options": [{
+					"label": "Private",
+					"value": ""
+				}, {
+					"label": "DataStax Astra",
+					"value": "apolloCloud"
+				}]
+			},
+			{
 				"inputLabel": "Hosts",
 				"inputKeyword": "hosts",
 				"inputType": "dynamicListInput",
@@ -36,7 +49,11 @@
 							"regex": "([^\\s])" //not empty
 						}
 					}
-				]
+				],
+				"dependency": {
+					"key": "clusterType",
+					"value": ""
+				}
 			},
 			{
 				"inputLabel": "Local Data Center",
@@ -46,6 +63,17 @@
 				"dependency": {
 					"key": "clusterType",
 					"value": ""
+				}
+			},
+			{
+				"inputLabel": "Secure Connect Bundle",
+				"inputKeyword": "secureConnectBundle",
+				"inputType": "file",
+				"inputPlaceholder": "Secure Connect Bundle",
+				"extensions": ["zip"],
+				"dependency": {
+					"key": "clusterType",
+					"value": "apolloCloud"
 				}
 			}
 		]
@@ -68,6 +96,10 @@
 		]	
 	}, {
 		"lowerTab": "SSL",
+		"disable": {
+			"key": "clusterType",
+			"value": "apolloCloud"
+		},
 		"structure": [
 			{
 				"inputLabel": "SSL Type",
