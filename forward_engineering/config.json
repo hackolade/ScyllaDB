@@ -1,7 +1,7 @@
 {
 	"extension": "cql",
 	"filterName": "Cassandra Query Language",
-	"namePrefix": "Cassandra",
+	"namePrefix": "ScyllaDB",
 	"hasUpdateScript": false,
 	"level": {
 		"entity": true,

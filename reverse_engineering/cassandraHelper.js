@@ -164,11 +164,17 @@ module.exports = (_) => {
 		}
 	};
 	
-	const connect = (app) => (info) => {
+	const connect = (app, logger) => (info) => {
 		if (!state.client) {
 			return getClient(app, info)
 				.then((client) => {
 					state.client = client;
+
+					client.on('log', (type, name, info, furtherInfo) => {
+						if (logger) {
+							logger.log('info', { message: '[' + type + '] ' + name + ': ' + info + '. ' + furtherInfo }, 'ScyllaDB Info');
+						}
+					});
 	
 					return state.client.connect();
 				});
@@ -305,7 +311,7 @@ module.exports = (_) => {
 	const getTableSchema = (columns, udtHash, sample = {}) => {
 		let schema = {};
 		columns.forEach(column => {
-			const columnType = typesHelper(_).getColumnType(column, udtHash, sample[column.name]);
+			const columnType = typesHelper(_).getColumnType(column, udtHash, sample ? sample[column.name] : undefined);
 			schema[column.name] = columnType;
 			schema[column.name].code = column.name;
 			schema[column.name].static = column.isStatic;
@@ -560,6 +566,7 @@ module.exports = (_) => {
 			packageData.modelDefinitions = {
 				definitions: handleUdts(udtHash)
 			};
+
 			if (!_.isEmpty(data.views)) {
 				packageData.views = getViewsData(data.views, data.tableName, schema);
 			}
@@ -735,6 +742,29 @@ module.exports = (_) => {
 
 	const isView = name => name.slice(-4) === ' (v)';
 	
+	const filterNullItems = (doc) => {
+		if (doc === null) {
+			return undefined;
+		} else if (Array.isArray(doc)) {
+			return doc.map(filterNullItems).filter(item => item !== undefined);
+		} else if (typeof doc === 'object') {
+			return Object.keys(doc).reduce((result, key) => {
+				const item = filterNullItems(doc[key]);
+				
+				if (item === undefined) {
+					return result;
+				}
+
+				return {
+					...result,
+					[key]: item,
+				};
+			}, {});
+		} else {
+			return doc;
+		}
+	};
+
 	return {
 		connect,
 		close,
@@ -760,6 +790,7 @@ module.exports = (_) => {
 		isOldVersion,
 		getViews,
 		getViewsNames,
-		splitEntityNames
+		splitEntityNames,
+		filterNullItems
 	};
 }

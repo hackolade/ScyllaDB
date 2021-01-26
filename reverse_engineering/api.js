@@ -6,7 +6,7 @@ const logHelper = require('./logHelper');
 
 module.exports = {
 	connect: function(connectionInfo, logger, cb, app){
-		cassandraHelper(app.require('lodash')).connect(app)(connectionInfo)
+		cassandraHelper(app.require('lodash')).connect(app, logger)(connectionInfo)
 			.then(cb, (error) => {
 				logger.log('error', error, 'Connection error');
 				cb(error);
@@ -41,7 +41,7 @@ module.exports = {
 		const { includeSystemCollection } = connectionInfo;
 		const cassandra = cassandraHelper(app.require('lodash'));
 
-		cassandra.connect(app)(connectionInfo).then(() => {
+		cassandra.connect(app, logger)(connectionInfo).then(() => {
 				let keyspaces = cassandra.getKeyspacesNames();
 
 				if (!includeSystemCollection) {
@@ -92,13 +92,13 @@ module.exports = {
 			
 			cassandra.getUDF(keyspaceName)
 			.then(udf => {
-				logger.progress({ message: 'UDF has loaded', containerName: keyspaceName, entityName: '' });
+				progress(logger, keyspaceName, '', 'UDF has loaded');
 
 				udfData = cassandra.handleUDF(udf);
 				return cassandra.getUDA(keyspaceName)
 			})
 			.then(uda => {
-				logger.progress({ message: 'UDA has loaded', containerName: keyspaceName, entityName: '' });
+				progress(logger, keyspaceName, '', 'UDA has loaded');
 
 				udaData = cassandra.handleUDA(uda);
 
@@ -111,7 +111,7 @@ module.exports = {
 			})
 			.catch(err => {
 				logger.log('error', cassandra.prepareError(err), 'Retrieving schema');
-				keyspaceCallback(cassandra.prepareError(err));
+				keyspaceCallback(err);
 			});
 
 			const pipeline = (UDAs, UDFs, views) => {
@@ -146,15 +146,15 @@ module.exports = {
 							exec(cassandra.getTableMetadata(keyspaceName, tableName), 'Load meta data...', 'Meta data has loaded'),
 							exec(cassandra.scanRecords(keyspaceName, tableName, recordSamplingSettings), 'Load records...', 'Records have loaded')
 						]).then(([table, records]) => {
-							logger.progress({ message: 'Meta data has loaded', containerName: keyspaceName, entityName: tableName });
+							loadProgress('Meta data has loaded');
 
 							packageData = cassandra.getPackageData({
+								records: cassandra.filterNullItems(JSON.parse(JSON.stringify(records))),
 								keyspaceName,
 								table,
 								tableName,
 								UDFs,
 								UDAs,
-								records,
 								views
 							}, includeEmptyCollection);
 
@@ -174,8 +174,12 @@ module.exports = {
 				}
 			};
 		}, (err, res) => {
+			err = cassandra.prepareError(err);
+
 			if (!err) {
 				logger.progress({ message: 'Reverse-Engineering complete!', containerName: '', entityName: '' });
+			} else {
+				logger.log('error', err, 'Retrieving schema');
 			}
 
 			return cb(err, res);
@@ -195,4 +199,5 @@ const progress = (logger, keyspace, table, message) => {
 		entityName: table,
 		message: message
 	});
+	logger.log('info', { keyspace, table, message }, 'Retrieving schema ...');
 }

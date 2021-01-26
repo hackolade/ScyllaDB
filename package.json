@@ -1,7 +1,7 @@
 {
 	"name": "ScyllaDB",
-	"version": "0.1.3",
-	"versionDate": "2020-04-27",
+	"version": "0.1.8",
+	"versionDate": "2020-10-23",
 	"author": "hackolade",
 	"engines": {
 		"hackolade": "3.6.6",
@@ -24,7 +24,8 @@
 			"enableReverseEngineering": true,
 			"disableChoices": true,
 			"enableJsonType": true,
-			"enableArrayItemName": true
+			"enableArrayItemName": true,
+			"FEScriptCommentsSupported": true
 		}
 	},
 	"description": "Hackolade plugin for ScyllaDB"

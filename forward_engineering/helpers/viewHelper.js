@@ -1,8 +1,12 @@
 'use strict'
 
-const _ = require('lodash');
-const { retrieveContainerName, retrieveEntityName, retrivePropertyFromConfig } = require('./generalHelper');
+let _;
+const { dependencies } = require('./appDependencies');
+const { commentDeactivatedStatement } = require('./commentsHelper');
+const { retrieveContainerName, retrieveEntityName, retrivePropertyFromConfig, retrieveIsItemActivated } = require('./generalHelper');
 const { getOptions, getPrimaryKeyList } = require('./tableHelper');
+
+const setDependencies = ({ lodash }) => _ = lodash;
 
 const getColumnNames = (collectionRefsDefinitionsMap, columns) => {
 	return _.uniq(Object.keys(columns).map(name => {
@@ -40,7 +44,7 @@ const getNamesByIds = (collectionRefsDefinitionsMap, ids) => {
 			return hash;
 		}
 		return Object.assign({}, hash, {
-			[id]: name
+			[id]: { name: name }
 		});
 	}, {});
 };
@@ -63,10 +67,10 @@ const getPrimaryKeysNames = (collectionRefsDefinitionsMap, viewData) => {
 		partitionKeys.map(key => key.keyId)
 	);
 
-	return _.values(partitionKeysHash).filter(_.identity).map(name => `"${name}"`);
+	return _.values(partitionKeysHash).filter(_.identity).map(field => `"${field.name}"`);
 };
 
-const getPrimaryKeyScript = (collectionRefsDefinitionsMap, viewData) => {
+const getPrimaryKeyScript = (collectionRefsDefinitionsMap, viewData, isParentActivated) => {
 	const partitionKeys = retrivePropertyFromConfig(viewData, 0, 'compositePartitionKey', []);
 	const partitionKeysHash = getNamesByIds(
 		collectionRefsDefinitionsMap,
@@ -74,7 +78,7 @@ const getPrimaryKeyScript = (collectionRefsDefinitionsMap, viewData) => {
 	);
 	const clusteringKeyData = getClusteringKeyData(collectionRefsDefinitionsMap, viewData);
 
-	const keysList = getPrimaryKeyList(partitionKeysHash, clusteringKeyData.clusteringKeysHash);
+	const keysList = getPrimaryKeyList(partitionKeysHash, clusteringKeyData.clusteringKeysHash, isParentActivated);
 	if (!keysList) {
 		return '';
 	}
@@ -104,8 +108,10 @@ module.exports = {
 		viewData,
 		entityData,
 		containerData,
-		collectionRefsDefinitionsMap
+		collectionRefsDefinitionsMap,
+		isKeyspaceActivated = true
 	}) {
+		setDependencies(dependencies);
 		let script = [];
 		const columns = schema.properties || {};
 		const view = _.first(viewData) || {};
@@ -115,8 +121,11 @@ module.exports = {
 		const tableName = bucketName ? `"${bucketName}"."${entityName}"` : `"${entityName}"`;
 		const viewName = view.code || view.name;
 		const name = bucketName ? `"${bucketName}"."${viewName}"` : `"${viewName}"`;
+		
+		const isViewActivated = retrieveIsItemActivated(entityData) && retrieveIsItemActivated(viewData);
+		const isViewChildrenActivated = isKeyspaceActivated && isViewActivated;
 
-		const primaryKeyScript = getPrimaryKeyScript(collectionRefsDefinitionsMap, viewData);
+		const primaryKeyScript = getPrimaryKeyScript(collectionRefsDefinitionsMap, viewData, isViewChildrenActivated);
 		const optionsScript = getOptionsScript(collectionRefsDefinitionsMap, viewData);
 
 		script.push(`CREATE MATERIALIZED VIEW IF NOT EXISTS ${name}`);
@@ -139,6 +148,10 @@ module.exports = {
 			script.push(optionsScript);
 		}
 		
-		return script.join('\n  ') + ';';
+		return commentDeactivatedStatement(
+			script.join('\n  ') + ';',
+			isViewActivated,
+			isKeyspaceActivated
+		);
 	}
 };

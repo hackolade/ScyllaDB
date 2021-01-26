@@ -1,6 +1,14 @@
 'use strict'
 
-const { retrieveContainerName, retrieveEntityName, retrieveUDA, retrieveUDF, retrieveIndexes } = require('./helpers/generalHelper');
+const {
+	retrieveContainerName,
+	retrieveEntityName,
+	retrieveUDA,
+	retrieveUDF,
+	retrieveIndexes,
+	retrieveIsItemActivated,
+	commentDeactivatedStatement,
+} = require('./helpers/generalHelper');
 const { getTableStatement } = require('./helpers/tableHelper');
 const { sortUdt, getUdtMap, getUdtScripts } = require('./helpers/udtHelper');
 const { getIndexes } = require('./helpers/indexHelper');
@@ -8,11 +16,13 @@ const { getKeyspaceStatement } = require('./helpers/keyspaceHelper');
 const { getAlterScript } = require('./helpers/updateHelper');
 const { getViewScript } = require('./helpers/viewHelper');
 const { getCreateTableScript } = require('./helpers/createHelper');
+const { setDependencies } = require('./helpers/appDependencies');
 const { applyToInstance, testConnection } = require('./helpers/dbConnectionService/index');
 
 module.exports = {
-	generateScript(data, logger, callback) {
+	generateScript(data, logger, callback, app) {
 		try {
+			setDependencies(app);
 			data.udtTypeMap = getUdtMap([data.modelDefinitions, data.externalDefinitions]);
 			data.jsonSchema = JSON.parse(data.jsonSchema);
 			data.modelDefinitions = sortUdt(JSON.parse(data.modelDefinitions));
@@ -22,7 +32,7 @@ module.exports = {
 			if (data.isUpdateScript) {
 				callback(null, getAlterScript(data.jsonSchema, data.udtTypeMap, data));
 			} else {
-				let script = `${getKeyspaceStatement(data.containerData)}\n\n${getCreateTableScript(data)}`;
+				let script = `${getKeyspaceStatement(data.containerData)}\n\n${getCreateTableScript(data, true)}`;
 				callback(null, script);
 			}
 		} catch (e) {
@@ -34,7 +44,8 @@ module.exports = {
 		}
 	},
 
-	generateViewScript(data, logger, callback) {
+	generateViewScript(data, logger, callback, app) {
+		setDependencies(app);
 		const viewSchema = JSON.parse(data.jsonSchema || '{}');
 
 		const script = getViewScript({
@@ -48,8 +59,9 @@ module.exports = {
 		callback(null, script)
 	},
 
-	generateContainerScript(data, logger, callback) {
+	generateContainerScript(data, logger, callback, app) {
 		try {
+			setDependencies(app);
 			if (data.isUpdateScript) {
 				let result = '';
 				data.udtTypeMap = getUdtMap([data.modelDefinitions, data.externalDefinitions]);
@@ -65,12 +77,13 @@ module.exports = {
 
 				const containerName = retrieveContainerName(containerData);
 				const keyspace = getKeyspaceStatement(containerData);
-
+				const isKeyspaceActivated = retrieveIsItemActivated(containerData);
+				
 				const generalUdtTypeMap = getUdtMap([modelDefinitions, externalDefinitions]);
 				let generalUDT = getUdtScripts(containerName, [
 					externalDefinitions,
 					modelDefinitions
-				], generalUdtTypeMap);
+				], generalUdtTypeMap, isKeyspaceActivated);
 
 				const UDF = getUserDefinedFunctions(retrieveUDF(containerData));
 				const UDA = getUserDefinedAggregations(retrieveUDA(containerData));
@@ -80,29 +93,50 @@ module.exports = {
 					...generalUDT
 				);
 
-				data.entities.forEach(entityId => {
-					const internalDefinitions = sortUdt(JSON.parse(data.internalDefinitions[entityId]));
+				data.entities.forEach((entityId) => {
+					const internalDefinitions = sortUdt(
+						JSON.parse(data.internalDefinitions[entityId])
+					);
 					const jsonSchema = JSON.parse(data.jsonSchema[entityId]);
 					const entityData = data.entityData[entityId];
-					const udtTypeMap = Object.assign({}, generalUdtTypeMap, getUdtMap([internalDefinitions, jsonSchema]));
+					const udtTypeMap = Object.assign(
+						{},
+						generalUdtTypeMap,
+						getUdtMap([internalDefinitions, jsonSchema])
+					);
 
 					const entityName = retrieveEntityName(entityData);
+					const isEntityActivated = retrieveIsItemActivated(entityData);
 					const dataSources = [
 						jsonSchema,
 						modelDefinitions,
 						internalDefinitions,
-						externalDefinitions
+						externalDefinitions,
 					];
-					const internalUdt = getUdtScripts(containerName, [internalDefinitions, jsonSchema], udtTypeMap);
+					const internalUdt = getUdtScripts(
+						containerName,
+						[internalDefinitions, jsonSchema],
+						udtTypeMap,
+						isKeyspaceActivated && isEntityActivated
+					).map(udtStatement => commentDeactivatedStatement(udtStatement, isEntityActivated, isKeyspaceActivated));
+
 					const table = getTableStatement({
 						tableData: jsonSchema,
 						tableMetaData: entityData,
 						keyspaceMetaData: containerData,
 						dataSources,
-						udtTypeMap
+						udtTypeMap,
+						isKeyspaceActivated,
 					});
-					const indexes = getIndexes(retrieveIndexes(entityData), dataSources, entityName, containerName);
-
+					const indexes = getIndexes(
+						retrieveIndexes(entityData),
+						dataSources,
+						entityName,
+						containerName,
+						isEntityActivated,
+						isKeyspaceActivated,
+					);
+					
 					cqlScriptData.push(...internalUdt, table, indexes);
 				});
 
@@ -114,13 +148,14 @@ module.exports = {
 						viewData: data.viewData[viewId],
 						entityData: data.entityData[viewSchema.viewOn],
 						containerData: data.containerData,
-						collectionRefsDefinitionsMap: data.collectionRefsDefinitionsMap
+						collectionRefsDefinitionsMap: data.collectionRefsDefinitionsMap,
+						isKeyspaceActivated
 					})
 				}));
 
 				cqlScriptData.push(UDF, UDA);
 
-				callback(null, getScript(cqlScriptData));
+				callback(null, commentDeactivatedStatement(getScript(cqlScriptData), isKeyspaceActivated));
 			}
 		} catch (e) {
 			logger.log('error', { message: e.message, stack: e.stack }, 'Cassandra Forward-Engineering Error');
