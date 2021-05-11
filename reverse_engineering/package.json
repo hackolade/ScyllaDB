@@ -1,10 +1,13 @@
 {
-  "name": "ScyllaDB",
+  "name": "Datastax",
   "version": "1.0.0",
   "description": "",
   "author": "Hackolade",
   "dependencies": {
-    "cassandra-driver": "^4.3.1"
+    "antlr4": "^4.8.0",
+    "cassandra-driver": "^4.3.1",
+    "jks-js": "^1.0.0",
+    "tunnel-ssh": "^4.1.4"
   },
   "systemKeyspaces": [
     "cfs",
@@ -26,5 +29,6 @@
     "system_views",
     "system_virtual_schema"
   ],
+  "type": "multi",
   "installed": true
 }
