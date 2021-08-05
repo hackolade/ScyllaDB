@@ -6,7 +6,7 @@ const { getNamesByIds } = require('./schemaHelper');
 
 const getIndexes = (indexes, dataSources, tableName, keyspaceName, isTableActivated, isKeyspaceActivated) => {
 	const indexStatements = unwindIndexes(indexes).map(index => {
-		const isIndexKeyActivated = isIndexColumnKeyActivated(index.SecIndxKey, dataSources);
+		const isIndexKeyActivated = index.isActivated !== false && isIndexColumnKeyActivated(index.SecIndxKey, dataSources);
 		const indexStatement = getIndex(
 			index.name,
 			keyspaceName,

@@ -84,14 +84,15 @@
 				"inputLabel": "User Name",
 				"inputKeyword": "user",
 				"inputType": "text",
-				"inputPlaceholder": "User Name"
+				"inputPlaceholder": "Username"
 				
 			},
 			{
 				"inputLabel": "Password",
 				"inputKeyword": "password",
 				"inputType": "password",
-				"isHiddenKey": true
+				"isHiddenKey": true,
+				"inputPlaceholder": "pwd"
 			}
 		]	
 	}, {
