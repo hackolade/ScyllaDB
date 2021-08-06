@@ -12,7 +12,7 @@ const tab = (text, count = 1) => {
 const retrivePropertyFromConfig = (config, tab, propertyName, defaultValue = "") => {
 	const value = ((config || [])[tab] || {})[propertyName];
 
-	if (value === undefined) {
+	if (value === undefined || value === '') {
 		return defaultValue;
 	}
 
