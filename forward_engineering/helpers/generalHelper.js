@@ -9,7 +9,15 @@ const tab = (text, count = 1) => {
 	return text.split('\n').map(string => space + string).join('\n');
 };
 
-const retrivePropertyFromConfig = (config, tab, propertyName, defaultValue = "") => ((config || [])[tab] || {})[propertyName] || defaultValue;
+const retrivePropertyFromConfig = (config, tab, propertyName, defaultValue = "") => {
+	const value = ((config || [])[tab] || {})[propertyName];
+
+	if (value === undefined || value === '') {
+		return defaultValue;
+	}
+
+	return value;
+};
 
 const retrieveContainerName = (containerConfig) => retrivePropertyFromConfig(
 		containerConfig, 0, "code", 
