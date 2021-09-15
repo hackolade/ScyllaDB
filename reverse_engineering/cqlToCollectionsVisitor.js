@@ -757,7 +757,7 @@ const getTargetType = (type) => {
 
 const complexTypeMapper = type => {
 	switch(type) {
-		case "number":
+		case "numeric":
 		  return "num";
 		case "char":
 		  return "str";
