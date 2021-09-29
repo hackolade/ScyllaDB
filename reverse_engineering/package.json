@@ -7,7 +7,7 @@
     "antlr4": "^4.8.0",
     "cassandra-driver": "^4.3.1",
     "jks-js": "^1.0.0",
-    "tunnel-ssh": "^4.1.4"
+    "tunnel-ssh": "github:hackolade/tunnel-ssh"
   },
   "systemKeyspaces": [
     "cfs",
