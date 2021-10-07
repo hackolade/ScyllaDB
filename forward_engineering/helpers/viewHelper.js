@@ -128,7 +128,7 @@ module.exports = {
 		const primaryKeyScript = getPrimaryKeyScript(collectionRefsDefinitionsMap, viewData, isViewChildrenActivated);
 		const optionsScript = getOptionsScript(collectionRefsDefinitionsMap, viewData);
 
-		script.push(`CREATE MATERIALIZED VIEW IF NOT EXISTS ${name}`);
+		script.push(`CREATE MATERIALIZED VIEW ${view.viewIfNotExist ? `IF NOT EXISTS ` : ``}${name}`);
 	
 		if (!columns) {
 			script.push(`AS SELECT * FROM ${tableName};`);

@@ -53,7 +53,8 @@ class Visitor extends CqlParserVisitor {
 		const options = optionsContext ? this.visit(optionsContext) : { partitionKey: [], clusteringKey: []};
 		const comments = removeQuotes(options?.comment || '');
 		delete options?.comment;
-		
+		const tableIfNotExist = this.visitFlagValue(ctx, 'ifNotExist');
+
 		return {
 			type: CREATE_COLLECTION_COMMAND,
 			collectionName,
@@ -68,6 +69,7 @@ class Visitor extends CqlParserVisitor {
 				tableOptions: options,
 				compositePartitionKey: keyData.partitionKey,
 				compositeClusteringKey: mergeClusteringKeys(options.clusteringKey, keyData.clusteringKey ),
+				tableIfNotExist
 			}
 		}
 	}
@@ -76,13 +78,15 @@ class Visitor extends CqlParserVisitor {
 		const name = this.getKeyspaceName(ctx)
 		const replicationProperties = this.visit(ctx.replicationList());
 		const durableWrites = !!(this.visit(ctx.durableWrites()));
+		const keyspaceIfNotExist = this.visitFlagValue(ctx, 'ifNotExist');
 
 		return {
 			type: CREATE_BUCKET_COMMAND,
 			name,
 			data: {
 				...replicationProperties,
-				durableWrites
+				durableWrites,
+				keyspaceIfNotExist
 			}
 		};
 	}
@@ -100,7 +104,8 @@ class Visitor extends CqlParserVisitor {
 		const bucketName = keyspace ? this.visit(keyspace) : '';
 		const primaryKeyContext = ctx.primaryKeyElement();
 		const keyData = primaryKeyContext ? this.visit(primaryKeyContext) : { partitionKey: [], clusteringKey: [] };
-		
+		const viewIfNotExist = this.visitFlagValue(ctx, 'ifNotExist');
+
 		return {
 			type: CREATE_VIEW_COMMAND,
 			name,
@@ -111,7 +116,8 @@ class Visitor extends CqlParserVisitor {
 				comments,
 				tableOptions: options,
 				compositePartitionKey: keyData.partitionKey,
-				compositeClusteringKey: keyData.clusteringKey
+				compositeClusteringKey: keyData.clusteringKey,
+				viewIfNotExist
 			}
 		};
 	}
@@ -121,13 +127,15 @@ class Visitor extends CqlParserVisitor {
 		const column = this.visit(ctx.indexColumnSpec());
 		const nameContext = ctx.indexName();
 		const name = nameContext ? this.visit(nameContext) : '';
-		
+		const indexIfNotExist = this.visitFlagValue(ctx, 'ifNotExist');
+
 		return {
 			type: ADD_COLLECTION_LEVEL_INDEX_COMMAND,
 			bucketName: keyspace,
 			collectionName: this.visit(ctx.table()),
 			name,
-			column
+			column,
+			indexIfNotExist
 		};
 	}
 
@@ -672,6 +680,15 @@ class Visitor extends CqlParserVisitor {
 		const keyspaceContext = ctx.keyspace();
 
 		return keyspaceContext ? this.visit(keyspaceContext) : '';
+	}
+
+	visitFlagValue(ctx, funcName) {
+		try {
+			this.visit(ctx[funcName]());
+			return true;
+		} catch (e) {
+			return false;
+		}
 	}
 }
 

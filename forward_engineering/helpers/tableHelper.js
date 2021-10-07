@@ -18,7 +18,7 @@ let _;
 
 const setDependencies = ({ lodash }) => _ = lodash;
 
-const getCreateTableStatement = (keyspaceName, tableName, columnDefinition, primaryKeys, options) => {
+const getCreateTableStatement = ({keyspaceName, tableName, columnDefinition, primaryKeys, options, ifNotExist}) => {
 	const items = [];
 
 	if (columnDefinition) {
@@ -29,7 +29,7 @@ const getCreateTableStatement = (keyspaceName, tableName, columnDefinition, prim
 		items.push(`PRIMARY KEY (${primaryKeys})`);
 	}
 
-	return `CREATE TABLE IF NOT EXISTS ${getTableNameStatement(keyspaceName, tableName)} (\n` + 
+	return `CREATE TABLE ${ifNotExist ? `IF NOT EXISTS ` : ``}${getTableNameStatement(keyspaceName, tableName)} (\n` + 
 		items.map(item => tab(item)).join(',\n') + '\n' +
 	`)${options};`;
 };
@@ -150,28 +150,30 @@ module.exports = {
 			clusteringKeys.map(key => key.keyId),
 			dataSources
 		);
-		
-		const createTableStatement = getCreateTableStatement(
+
+		const createTableStatement = getCreateTableStatement({
 			keyspaceName,
 			tableName,
-			getColumnDefinition(
+			columnDefinition: getColumnDefinition(
 				tableData.properties || {},
 				udtTypeMap,
 				isTableChildrenActivated
 			),
-			getPrimaryKeyList(
+			primaryKeys: getPrimaryKeyList(
 				partitionKeysHash,
 				clusteringKeysHash,
 				isTableChildrenActivated
 			),
-			getOptions(
+			options: getOptions(
 				clusteringKeys,
 				clusteringKeysHash,
 				tableId,
 				tableOptions,
 				tableComment,
 				isTableChildrenActivated
-			)
+			),
+			ifNotExist: retrivePropertyFromConfig(tableMetaData, 0, "tableIfNotExist", false)
+		}
 		);
 
 		return commentDeactivatedStatement(

@@ -254,7 +254,8 @@ const addIndexToCollection = (entitiesData, statementData) => {
         ...entityLevelData.SecIndxs || [],
         {
             name: statementData.name,
-            SecIndxKey: [statementData.column]
+            SecIndxKey: [statementData.column],
+            indexIfNotExist: statementData.indexIfNotExist
         }
     ];
 

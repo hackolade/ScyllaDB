@@ -50,6 +50,7 @@ module.exports = {
 			const cqlToCollectionsGenerator = new cqlToCollectionsVisitor();
 
 			const result = commandsService.convertCommandsToReDocs(cqlsTree.accept(cqlToCollectionsGenerator));
+
 			callback(null, result, {}, [], 'multipleSchema');
 		} catch(err) {
 			const { error, title, name } = err;

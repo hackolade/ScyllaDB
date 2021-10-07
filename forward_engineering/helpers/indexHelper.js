@@ -7,11 +7,13 @@ const { getNamesByIds } = require('./schemaHelper');
 const getIndexes = (indexes, dataSources, tableName, keyspaceName, isTableActivated, isKeyspaceActivated) => {
 	const indexStatements = unwindIndexes(indexes).map(index => {
 		const isIndexKeyActivated = index.isActivated !== false && isIndexColumnKeyActivated(index.SecIndxKey, dataSources);
-		const indexStatement = getIndex(
-			index.name,
+		const indexStatement = getIndex({
+			name: index.name,
 			keyspaceName,
 			tableName,
-			getIndexColumnStatement(index.SecIndxKey, dataSources)
+			indexColumnStatement:getIndexColumnStatement(index.SecIndxKey, dataSources),
+			ifNotExist: index.indexIfNotExist
+		}
 		);
 		return commentDeactivatedStatement(
 			indexStatement,
@@ -23,8 +25,8 @@ const getIndexes = (indexes, dataSources, tableName, keyspaceName, isTableActiva
 	return commentDeactivatedStatement(indexStatements, isTableActivated, isKeyspaceActivated);
 };
 
-const getIndex = (name, keyspaceName, tableName, indexColumnStatement) => (
-	`CREATE INDEX IF NOT EXISTS ${name ? `"${name}"` : ``}\n${tab(`ON ${getTableNameStatement(keyspaceName, tableName)} (${indexColumnStatement});`)}`	
+const getIndex = ({name, keyspaceName, tableName, indexColumnStatement,ifNotExist}) => (
+	`CREATE INDEX ${ifNotExist ? `IF NOT EXISTS ` : ``}${name ? `"${name}"` : ``}\n${tab(`ON ${getTableNameStatement(keyspaceName, tableName)} (${indexColumnStatement});`)}`	
 );
 
 const getIndexColumnStatement = (key, dataSources) => {
