@@ -77,7 +77,8 @@
 				}
 			}
 		]
-	}, {
+	}, 
+	{
 		"lowerTab": "Authentication",
 		"structure": [
 			{
@@ -95,7 +96,8 @@
 				"inputPlaceholder": "pwd"
 			}
 		]	
-	}, {
+	}, 
+	{
 		"lowerTab": "SSL",
 		"disable": {
 			"key": "clusterType",
@@ -326,7 +328,8 @@
 				}
 			}
 		]
-	}, {
+	}, 
+	{
 		"lowerTab": "Advanced",
 		"structure": [
 			{
