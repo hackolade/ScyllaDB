@@ -80,6 +80,7 @@
 	}, 
 	{
 		"lowerTab": "Authentication",
+		"helpUrl": "https://hackolade.com/help/Usernamepassword2.html",
 		"structure": [
 			{
 				"inputLabel": "User Name",
@@ -103,6 +104,15 @@
 			"key": "clusterType",
 			"value": "apolloCloud"
 		},
+		"helpUrl": [
+			{
+				"value": "https://hackolade.com/help/LDAP3.html",
+				"dependency": {
+					"key": "ssl",
+					"value": "jks"
+				}
+			}
+		],
 		"structure": [
 			{
 				"inputLabel": "SSL Type",
