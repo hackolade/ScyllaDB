@@ -30,13 +30,13 @@ const getIndex = ({name, keyspaceName, tableName, indexColumnStatement,ifNotExis
 );
 
 const getIndexColumnStatement = (key, dataSources) => {
-	const { name } = getNamesByIds([key.keyId], dataSources)[key.keyId];
+	const { name } = getNamesByIds([key.keyId], dataSources)[key.keyId] || {};
 
 	return `"${name}"`;
 };
 
 const isIndexColumnKeyActivated = (key, dataSources) => {
-	const { isActivated } = getNamesByIds([key.keyId], dataSources)[key.keyId];
+	const { isActivated } = getNamesByIds([key.keyId], dataSources)[key.keyId] || {};
 
 	return isActivated !== false;
 };

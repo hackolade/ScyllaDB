@@ -146,6 +146,12 @@ const commentDeactivatedStatement = (statement, isActivated = true, isParentActi
 
 const retrieveIsItemActivated = (itemConfig) => retrivePropertyFromConfig(itemConfig, 0, "isActivated", true);
 
+const getApplyDropStatement = data => {
+	const { applyDropStatements, additionalOptions = [] } = data.options || {};
+	const applyDropStatementsFromUi = (additionalOptions.find(option => option.id === 'applyDropStatements') || {}).value;
+	return applyDropStatements || applyDropStatementsFromUi;
+}
+
 module.exports = {
 	tab,
 	retrieveContainerName,
@@ -162,5 +168,6 @@ module.exports = {
 	canTypeHaveSubtype,
 	getEntityLevelConfig,
 	commentDeactivatedStatement,
-	retrieveIsItemActivated
+	retrieveIsItemActivated,
+	getApplyDropStatement
 };
