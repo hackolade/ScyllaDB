@@ -146,6 +146,20 @@ const commentDeactivatedStatement = (statement, isActivated = true, isParentActi
 
 const retrieveIsItemActivated = (itemConfig) => retrivePropertyFromConfig(itemConfig, 0, "isActivated", true);
 
+const getUserDefinedFunctions = (udfItems) => {
+	return udfItems.map(item => item.functionBody).filter(item => item).join('\n');
+};
+
+const getUserDefinedAggregations = (udaItems) => {
+	return udaItems.map(item => item.storedProcFunction).filter(item => item).join('\n');
+};
+
+const getApplyDropStatement = data => {
+	const { applyDropStatements, additionalOptions = [] } = data.options || {};
+	const applyDropStatementsFromUi = (additionalOptions.find(option => option.id === 'applyDropStatements') || {}).value;
+	return applyDropStatements || applyDropStatementsFromUi;
+}
+
 module.exports = {
 	tab,
 	retrieveContainerName,
@@ -162,5 +176,8 @@ module.exports = {
 	canTypeHaveSubtype,
 	getEntityLevelConfig,
 	commentDeactivatedStatement,
-	retrieveIsItemActivated
+	retrieveIsItemActivated,
+	getApplyDropStatement,
+	getUserDefinedAggregations,
+	getUserDefinedFunctions
 };
