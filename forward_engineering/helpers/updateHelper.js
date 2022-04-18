@@ -19,11 +19,10 @@ const getUpdateType = updateTypeData =>
 	`${alterTablePrefix(updateTypeData.tableName, updateTypeData.keySpace)} 
 	ALTER "${updateTypeData.columnData.name}" TYPE ${updateTypeData.columnData.type};`;
 
-const addColumnStatement = columnData => `ADD "${columnData.name}" ${columnData.type};\n`;
-const renameColumnStatement = columnData => `RENAME "${columnData.oldName}" TO "${columnData.newName}"`;
+const addColumnStatement = columnData => `ADD "${columnData.name}" ${columnData.type}`;
 
 const getAdd = addData => {
-	const script = `${alterTablePrefix(addData.tableName, addData.keyspaceName)} ${addColumnStatement(addData.columnData)}`;
+	const script = `${alterTablePrefix(addData.tableName, addData.keyspaceName)} ${addColumnStatement(addData.columnData)};`;
 	return [{
 		deleted: false,
 		modified: false,
@@ -32,25 +31,15 @@ const getAdd = addData => {
 		field: 'field',
 	}];
 };
-const getRenameColumn = renameData => {
-	const script = 
-	`${alterTablePrefix(renameData.tableName, renameData.keyspaceName)} ${renameColumnStatement(renameData.columnData)};`;
-	return [{
-		added: false,
-		deleted: false,
-		modified: true,
-		script,
-		field: 'field',
-	}];
-};
+
 const objectContainsProp = (object, key) => object[key] ? true : false;
 
-const isCommentNew = comment => comment && comment.new !== comment.old;
-const getChangeOption = changeData => {
-	const optionsDiff = getDiff(changeData.options.new, changeData.options.old);
+const isCommentNew = comment => comment && comment.new && comment.new !== comment.old;
+const getChangeOption = ({ options, comment }) => {
+	const optionsDiff = getDiff(options.new || {}, options.old || {});
 	const configOptionsWithValues = mergeValuesWithConfigOptions(optionsDiff);
-	return isCommentNew(changeData.comment)
-		? parseToString(configOptionsWithValues, changeData.comment.new)
+	return isCommentNew(comment)
+		? parseToString(configOptionsWithValues, comment.new)
 		: parseToString(configOptionsWithValues);
 };
 
@@ -67,20 +56,21 @@ const getUpdate = updateData => {
 	const oldName = _.get(property, 'compMod.oldField.name');
 	const newName = _.get(property, 'compMod.newField.name');
 	const getData = columnData => ({ ...updateData, columnData: { ...updateData.columnData, ...columnData }});
-	if (!oldName || !newName) {
+	if (!oldName || 
+		!newName || 
+		oldName === newName || 
+		property.compositeClusteringKey || 
+		property.compositePartitionKey) {
 		return '';
 	}
-	if (!property.primaryKey) {
-		const deletePropertyScript = getDelete(getData({ name: oldName }));
-		const addPropertyScript = getAdd(getData({ name: newName }));
-		return [...deletePropertyScript, ...addPropertyScript];;
-	}
-	return getRenameColumn(getData({ oldName, newName })); 
+	const deletePropertyScript = getDelete(getData({ name: oldName }));
+	const addPropertyScript = getAdd(getData({ name: newName }));
+	return [...deletePropertyScript, ...addPropertyScript];
 };
 
 const getDeleteTable = deleteData => { 
 	const tableStatement = getTableNameStatement(deleteData.keyspaceName, deleteData.tableName);
-	const script = `DROP TABLE ${tableStatement}`;
+	const script = `DROP TABLE IF EXISTS ${tableStatement};`;
 	return [{
 		modified: false,
 		added: false,
@@ -163,8 +153,6 @@ const getOptionsScript = (compMod, tableName, isGetOptionScript) => {
 	}
 	
 	const script = getChangeOption({
-		keySpace: compMod.keyspaceName,
-		tableName: tableName,
 		options: compMod.tableOptions,
 		comment: compMod.comments
 	});
@@ -539,55 +527,44 @@ const sortScript = (scriptData) => {
 
 			return scripts;
 		}, { scripts: [], filteredScripts: [] });
-	}
+	};
 
-	let sortedScripts = [];
+	const orderForScripts = [
+		['keySpaces', 'added'],
+		['keySpaces', 'modified'],
+		['view', 'deleted'],
+		['index', 'deleted'],
+		['renewal', 'deleted'],
+		['table', 'deleted'],
+		['udt', 'deleted'],
+		['udt', 'added'],
+		['udt', 'modified'],
+		['table', 'added'],
+		['table', 'modified'],
+		['field', 'deleted'],
+		['field', 'added'],
+		['field', 'modified'],
+		['index', 'added'],
+		['index', 'modified'],
+		['renewal', 'added'],
+		['view', 'added'],
+		['view', 'modified'],
+		['udf', 'deleted'],
+		['udf', 'added'],
+		['keySpaces', 'deleted'],
+	];
+	const sortedScripts = orderForScripts.reduce((script, [key, prop]) => {
+		const { scripts, filteredScripts } = filter(prop, script.filteredScripts, key);
+		return {
+			sorted: [...script.sorted, ...scripts],
+			filteredScripts
+		}
+	}, {
+		sorted: [],
+		filteredScripts: scriptData
+	});
 
-	const { scripts: createKeyspacesScripts, filteredScripts: scriptsWithoutCreateKeyspace } = filter('added', scriptData, 'keySpaces');
-	const { scripts: deleteKeyspaceScripts, filteredScripts: scriptsWithoutDropKeyspace } = filter('deleted', scriptsWithoutCreateKeyspace, 'keySpaces');
-	const { scripts: modifyKeyspacesScripts, filteredScripts: scriptsWithoutModifyKeyspace } = filter('modified', scriptsWithoutDropKeyspace, 'keySpaces');
-	const { scripts: deleteFunctionScripts, filteredScripts: scriptsWithoutDropFunction } = filter('deleted', scriptsWithoutModifyKeyspace, 'udf');
-	const { scripts: createFunctionScripts, filteredScripts: scriptsWithoutCreateFunction } = filter('added', scriptsWithoutDropFunction, 'udf');
-	const { scripts: createTablesScripts, filteredScripts: scriptsWithoutCreateTable } = filter('added', scriptsWithoutCreateFunction, 'table');
-	const { scripts: deleteTablesScripts, filteredScripts: scriptsWithoutDropTable } = filter('deleted', scriptsWithoutCreateTable, 'table');
-	const { scripts: modifyTablesScripts, filteredScripts: scriptsWithoutModifyTable } = filter('modified', scriptsWithoutDropTable, 'table');
-	const { scripts: createIndexesScripts, filteredScripts: scriptsWithoutCreateIndexes } = filter('added', scriptsWithoutModifyTable, 'index');
-	const { scripts: deleteIndexesScripts, filteredScripts: scriptsWithoutDropIndexes } = filter('deleted', scriptsWithoutCreateIndexes, 'index');
-	const { scripts: modifyIndexesScripts, filteredScripts: scriptsWithoutModifyIndexes } = filter('modified', scriptsWithoutDropIndexes, 'index');
-	const { scripts: renewalIndexesScripts, filteredScripts: scriptsWithoutRenewalIndexes } = filter('added', scriptsWithoutModifyIndexes, 'renewal');
-	const { scripts: createViewsScripts, filteredScripts: scriptsWithoutCreateViews } = filter('added', scriptsWithoutRenewalIndexes, 'viewName');
-	const { scripts: deleteViewsScripts, filteredScripts: scriptsWithoutDeleteViews } = filter('deleted', scriptsWithoutCreateViews, 'viewName');
-	const { scripts: modifyViewsScripts, filteredScripts: scriptsWithoutModifyViews } = filter('modified', scriptsWithoutDeleteViews, 'viewName');
-	const { scripts: createFieldsScripts, filteredScripts: scriptsWithoutCreateField } = filter('added', scriptsWithoutModifyViews, 'field');    
-	const { scripts: deleteFieldsScripts, filteredScripts: scriptsWithoutDeleteField } = filter('deleted', scriptsWithoutCreateField, 'field');
-	const { scripts: modifyFieldsScripts, filteredScripts: scriptsWithoutModifyField } = filter('modified', scriptsWithoutDeleteField, 'field');
-	const { scripts: createUdtScripts, filteredScripts: scriptsWithoutCreateUdt } = filter('added', scriptsWithoutModifyField, 'udtName');
-	const { scripts: deleteUdtScripts, filteredScripts: scriptsWithoutDeleteUdt } = filter('deleted', scriptsWithoutCreateUdt, 'udtName');
-	const { scripts: modifyUdtScripts, filteredScripts: scriptsWithoutModifyUdt } = filter('modified', scriptsWithoutDeleteUdt, 'udtName');
-
-	return sortedScripts.concat(
-		createKeyspacesScripts,
-		deleteUdtScripts,
-		deleteTablesScripts,
-		createUdtScripts,
-		modifyKeyspacesScripts,
-		modifyUdtScripts,
-		createTablesScripts,
-		modifyTablesScripts,
-		deleteIndexesScripts,
-		modifyIndexesScripts,
-		deleteViewsScripts,
-		modifyViewsScripts,
-		deleteFieldsScripts,
-		createFieldsScripts,
-		modifyFieldsScripts,
-		createIndexesScripts,
-		createViewsScripts,
-		renewalIndexesScripts,
-		deleteFunctionScripts,
-		createFunctionScripts,
-		deleteKeyspaceScripts,
-		scriptsWithoutModifyUdt).map(data => data.script);
+	return [...sortedScripts.sorted, ...sortedScripts.filteredScripts].map(data => data.script);
 }
 
 module.exports = {
