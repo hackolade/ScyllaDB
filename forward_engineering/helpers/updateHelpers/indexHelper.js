@@ -65,7 +65,7 @@ const getDropIndexScript = (keyspaceName, tableName, secIndxs = []) => secIndxs.
 	const isExistScript = checkExistsScript(keyspaceName, tableIndexName, 'dropIndexes');
 	let script = '';
 	if (index.name && !isExistScript) {
-		script = `DROP INDEX IF EXISTS ${tableNameStatement}`;
+		script = `DROP INDEX IF EXISTS ${tableNameStatement};`;
 		setNameCollectionsScript(keyspaceName, tableIndexName, 'dropIndexes');
 	}
 	return {
