@@ -9,12 +9,12 @@ const scriptData = {
 	added: false,
 	deleted: false,
 	modified: false,
-	viewName: 'view',
+	view: 'view',
 };
 
 const getViewName = (keyspaceName, nameView) => `${keyspaceName ? `"${keyspaceName}".` : ''}"${nameView}"`;
 
-const modifyProperties = ['code', 'name', 'viewOn'];
+const modifyProperties = ['code', 'name'];
 const getIsOnlyOptionsModify = compMod => {
 	const isModifyProperties = modifyProperties.some(property => {
 		const { new: newProperty, old: oldProperty } = compMod[property] || {};
@@ -80,7 +80,7 @@ const getAlterView = role => {
 	const viewName = role.name || role.code;
 	const keyspaceName = role.compMod.keyspaceName;
 	if (optionScript) {
-		return `ALTER MATERIALIZED VIEW ${getViewName(keyspaceName, viewName)}\n${tab(optionScript)}`;
+		return `ALTER MATERIALIZED VIEW ${getViewName(keyspaceName, viewName)}\n${tab(optionScript)};`;
 	}
 }
 
