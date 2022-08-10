@@ -1,3 +1,5 @@
+const { getTypeByData } = require("../typeHelper");
+
 const removeColumnStatement = columnName => `DROP "${columnName}";`;
 
 const alterTablePrefix = (tableName, keySpace) => 
@@ -14,7 +16,31 @@ const getDelete = deleteData => {
 	}];
 };
 
+const hydrateColumn = ({ tableName, keyspaceName, property, udtMap }) => {
+	const { oldField = {}, newField = {} } = property?.compMod || {};
+	const newType = getTypeByData(property, udtMap);
+	const oldType = getTypeByData(oldField, udtMap)
+	return {
+		property,
+		oldName: oldField.name,
+		newName: newField.name,
+		newType,
+		oldType,
+		isNameChange: oldField.name !== newField.name,
+		isTypeChange: newType !== oldType,
+		dataForScript: {
+			tableName,
+			keyspaceName,
+			columnData: {
+				name: newField.name,
+				type: newType,
+			}
+		}
+	}
+};
+
 module.exports = {
 	getDelete,
-	alterTablePrefix
+	alterTablePrefix,
+	hydrateColumn
 }
