@@ -35,7 +35,7 @@ const getAdd = addData => {
 
 const getRenameColumn = renameData => {
 	const script = 
-	`${alterTablePrefix(renameData.tableName, renameData.keyspaceName)} ${renameColumnStatement(renameData.columnData)};`;
+		`${alterTablePrefix(renameData.tableName, renameData.keyspaceName)} ${renameColumnStatement(renameData.columnData)};`;
 	return [{
 		added: false,
 		deleted: false,
