@@ -33,7 +33,7 @@ const fieldTypeCompatible = (oldType, newType) => {
 		return type === oldType;
 	});
 
-	if (!foundCapabilityType) {
+	if (!Boolean(foundCapabilityType.length)) {
 		return false;
 	}
 
@@ -43,5 +43,5 @@ const fieldTypeCompatible = (oldType, newType) => {
 module.exports = {
 	mergeArrays,
 	checkIsOldModel,
-	fieldTypeCompatible
+	fieldTypeCompatible,
 }

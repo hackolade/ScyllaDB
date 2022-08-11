@@ -9,7 +9,7 @@ const { mergeArrays, checkIsOldModel, fieldTypeCompatible } = require('./updateH
 const { getViewScript } = require('./updateHelpers/viewHelper');
 const { getIndexTable } = require('./updateHelpers/indexHelper');
 const { getUdtScript, sortAddedUdt } = require('./updateHelpers/udtHelper');
-const { alterTablePrefix, getDelete } = require('./updateHelpers/tableHelper');
+const { alterTablePrefix, getDelete, hydrateColumn } = require('./updateHelpers/tableHelper');
 
 let _;
 
@@ -20,6 +20,7 @@ const getUpdateType = updateTypeData =>
 	ALTER "${updateTypeData.columnData.name}" TYPE ${updateTypeData.columnData.type};`;
 
 const addColumnStatement = columnData => `ADD "${columnData.name}" ${columnData.type}`;
+const renameColumnStatement = columnData => `RENAME "${columnData.oldName}" TO "${columnData.newName}"`;
 
 const getAdd = addData => {
 	const script = `${alterTablePrefix(addData.tableName, addData.keyspaceName)} ${addColumnStatement(addData.columnData)};`;
@@ -27,6 +28,18 @@ const getAdd = addData => {
 		deleted: false,
 		modified: false,
 		added: true,
+		script,
+		field: 'field',
+	}];
+};
+
+const getRenameColumn = renameData => {
+	const script = 
+		`${alterTablePrefix(renameData.tableName, renameData.keyspaceName)} ${renameColumnStatement(renameData.columnData)};`;
+	return [{
+		added: false,
+		deleted: false,
+		modified: true,
 		script,
 		field: 'field',
 	}];
@@ -51,21 +64,56 @@ const getCollectionName = compMod => {
 	}
 }
 
+const getUpdateColumnProvider = {
+	alterDropCreate({ dataForScript, oldName, newName }) {
+		const getData = columnData => ({ ...dataForScript, columnData: { ...dataForScript.columnData, ...columnData }});
+		const deletePropertyScript = getDelete(getData({ name: oldName }));
+		const addPropertyScript = getAdd(getData({ name: newName }));
+		return [...deletePropertyScript, ...addPropertyScript];
+	},
+
+	alterName(hydratedColumn) {
+		const { newName, oldName, dataForScript, property } = hydratedColumn;
+		if (!property.primaryKey) {
+			return this.alterDropCreate(hydratedColumn);
+		}
+		return getRenameColumn({ ...dataForScript, columnData: { oldName, newName } }); 
+	},
+
+	alterType(hydratedColumn) {
+		const { oldType, newType, dataForScript } = hydratedColumn;
+		if (!oldType || !newType) {
+			return [];
+		}
+		const isFieldTypeCompatible = fieldTypeCompatible(oldType, newType);
+		
+		if (!isFieldTypeCompatible) {
+			return this.alterDropCreate(hydratedColumn);
+		}
+	
+		return [{
+			script: getUpdateType(dataForScript),
+			added: false,
+			deleted: false,
+			modified: true,
+			field: 'field',
+		}];
+	} 
+};
+
 const getUpdate = updateData => {
-	const property = updateData.property;
-	const oldName = _.get(property, 'compMod.oldField.name');
-	const newName = _.get(property, 'compMod.newField.name');
-	const getData = columnData => ({ ...updateData, columnData: { ...updateData.columnData, ...columnData }});
-	if (!oldName || 
-		!newName || 
-		oldName === newName || 
-		property.compositeClusteringKey || 
-		property.compositePartitionKey) {
-		return '';
+	const hydratedColumn = hydrateColumn(updateData);
+	const { newName, oldName } = hydratedColumn;
+	if (!oldName || !newName) {
+		return [];
 	}
-	const deletePropertyScript = getDelete(getData({ name: oldName }));
-	const addPropertyScript = getAdd(getData({ name: newName }));
-	return [...deletePropertyScript, ...addPropertyScript];
+	if (hydratedColumn.isNameChange) {
+		return getUpdateColumnProvider.alterName(hydratedColumn);
+	} else if (hydratedColumn.isTypeChange) {
+		return getUpdateColumnProvider.alterType(hydratedColumn);
+	}
+
+	return [];
 };
 
 const getDeleteTable = deleteData => { 
@@ -312,45 +360,6 @@ const getAddTable = (addTableData) => {
 	}];
 }
 
-const handleAlterTypeForOldModel = ({ property, udtMap, tableName, keyspaceName, columnName }) => {
-	const { oldField, newField } = property?.compMod || {};
-	if (!oldField && !newField) {
-		return;
-	}
-
-	const oldFieldCassandraType = getTypeByData(oldField, udtMap);
-	const newFieldCassandraType = getTypeByData(newField, udtMap);
-
-	if (!oldFieldCassandraType || !newFieldCassandraType || oldFieldCassandraType === newFieldCassandraType) {
-		return;
-	}
-
-	const isFieldFieldTypeCompatible = fieldTypeCompatible(oldFieldCassandraType, newFieldCassandraType);
-
-	if (!isFieldFieldTypeCompatible) {
-		return;
-	}
-
-	const innerScript = getUpdateType({
-		keySpace: keyspaceName,
-		tableName: tableName,
-		columnData: {
-			name: columnName,
-			type: newFieldCassandraType
-		}
-	});
-
-	return {
-		script: innerScript,
-		added: false,
-		deleted: false,
-		modified: true,
-		keySpaces: keyspaceName,
-		name: tableName,
-		columnName: columnName
-	};
-}
-
 const handleProperties = ({ generator, tableProperties, udtMap, itemCompModData, tableName, isOldModel, data }) => {
 	return Object.keys(tableProperties)
 		.reduce((alterTableScript, columnName) => {
@@ -370,10 +379,6 @@ const handleProperties = ({ generator, tableProperties, udtMap, itemCompModData,
 
 			const keyspaceName = itemCompModData?.keyspaceName;
 
-			if (isOldModel) {
-				alterTableScript = alterTableScript.concat(handleAlterTypeForOldModel({ property, udtMap, tableName, keyspaceName, columnName }) || []);
-			}
-
 			if (generator.name === 'getUpdate' && !property.compMod) {
 				return alterTableScript;
 			}
@@ -388,6 +393,7 @@ const handleProperties = ({ generator, tableProperties, udtMap, itemCompModData,
 						type: columnType
 					},
 					property,
+					udtMap,
 				})
 			];
 		}, []);
