@@ -22,8 +22,8 @@ const setFrozenForAllUdt = (udtTypeMap) => {
 };
 
 const getName = (name, property) => {
-	if (typeof name === 'number' && property.name) {
-		return property.name;
+	if (typeof name === 'number' && property.displayName) {
+		return property.displayName;
 	}
 
 	return property.code || name;
@@ -37,8 +37,9 @@ const getUdtMap = (udtSources) => {
 	return udtSources.reduce((map, source) => {
 		eachField(source, (field, fieldName) => {
 			if (field.type === 'udt') {
-				map[fieldName] = {
-					name: getName(fieldName, field),
+				const name = getName(fieldName, field);
+				map[name] = {
+					name,
 					frozen: field.frozen
 				};
 			}
