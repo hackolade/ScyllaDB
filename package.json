@@ -1,7 +1,7 @@
 {
 	"name": "ScyllaDB",
-	"version": "0.1.47",
-	"versionDate": "2022-12-02",
+	"version": "0.1.48",
+	"versionDate": "2022-12-07",
 	"author": "hackolade",
 	"engines": {
 		"hackolade": "5.1.3",
