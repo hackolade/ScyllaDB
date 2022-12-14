@@ -792,7 +792,7 @@ dataType
    ;
 
 dataTypeName
-   : id
+   : (keyspace DOT)? type
    | STRING_LITERAL
    | K_TIMESTAMP
    | K_SET
