@@ -1,13 +1,13 @@
-// Generated from grammars/CqlLexer.g4 by ANTLR 4.8
+// Generated from grammars/CqlLexer.g4 by ANTLR 4.9.2
 // jshint ignore: start
 var antlr4 = require('antlr4/index');
 
 
 
-var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
-    "\u0002\u00b5\u0ac5\b\u0001\u0004\u0002\t\u0002\u0004\u0003\t\u0003\u0004",
-    "\u0004\t\u0004\u0004\u0005\t\u0005\u0004\u0006\t\u0006\u0004\u0007\t",
-    "\u0007\u0004\b\t\b\u0004\t\t\t\u0004\n\t\n\u0004\u000b\t\u000b\u0004",
+const serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786",
+    "\u5964\u0002\u00b5\u0ac5\b\u0001\u0004\u0002\t\u0002\u0004\u0003\t\u0003",
+    "\u0004\u0004\t\u0004\u0004\u0005\t\u0005\u0004\u0006\t\u0006\u0004\u0007",
+    "\t\u0007\u0004\b\t\b\u0004\t\t\t\u0004\n\t\n\u0004\u000b\t\u000b\u0004",
     "\f\t\f\u0004\r\t\r\u0004\u000e\t\u000e\u0004\u000f\t\u000f\u0004\u0010",
     "\t\u0010\u0004\u0011\t\u0011\u0004\u0012\t\u0012\u0004\u0013\t\u0013",
     "\u0004\u0014\t\u0014\u0004\u0015\t\u0015\u0004\u0016\t\u0016\u0004\u0017",
@@ -1802,24 +1802,118 @@ var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
     "\u0aa0\u0ac3\u0003\u0002\u0003\u0002"].join("");
 
 
-var atn = new antlr4.atn.ATNDeserializer().deserialize(serializedATN);
+const atn = new antlr4.atn.ATNDeserializer().deserialize(serializedATN);
 
-var decisionsToDFA = atn.decisionToState.map( function(ds, index) { return new antlr4.dfa.DFA(ds, index); });
+const decisionsToDFA = atn.decisionToState.map( (ds, index) => new antlr4.dfa.DFA(ds, index) );
 
-function CqlLexer(input) {
-	antlr4.Lexer.call(this, input);
-    this._interp = new antlr4.atn.LexerATNSimulator(this, atn, decisionsToDFA, new antlr4.PredictionContextCache());
-    return this;
+class CqlLexer extends antlr4.Lexer {
+
+    static grammarFileName = "CqlLexer.g4";
+    static channelNames = [ "DEFAULT_TOKEN_CHANNEL", "HIDDEN" ];
+	static modeNames = [ "DEFAULT_MODE" ];
+	static literalNames = [ null, "'('", "')'", "'{'", "'}'", "'['", "']'", 
+                         "','", "';'", "':'", null, null, null, null, "'.'", 
+                         "'*'", "'/'", "'%'", "'+'", "'--'", "'-'", "'\"'", 
+                         "'''" ];
+	static symbolicNames = [ null, "LR_BRACKET", "RR_BRACKET", "LC_BRACKET", 
+                          "RC_BRACKET", "LS_BRACKET", "RS_BRACKET", "COMMA", 
+                          "SEMI", "COLON", "SPACE", "SPEC_MYSQL_COMMENT", 
+                          "COMMENT_INPUT", "LINE_COMMENT", "DOT", "STAR", 
+                          "DIVIDE", "MODULE", "PLUS", "MINUSMINUS", "MINUS", 
+                          "DQUOTE", "SQUOTE", "K_ADD", "K_AGGREGATE", "K_ALL", 
+                          "K_ALLOW", "K_ALTER", "K_AND", "K_ANY", "K_APPLY", 
+                          "K_AS", "K_ASC", "K_AUTHORIZE", "K_BATCH", "K_BEGIN", 
+                          "K_BY", "K_CALLED", "K_CLUSTERING", "K_COLUMNFAMILY", 
+                          "K_COMPACT", "K_CONSISTENCY", "K_CONTAINS", "K_CREATE", 
+                          "K_CUSTOM", "K_DELETE", "K_DESC", "K_DESCRIBE", 
+                          "K_DISTINCT", "K_DROP", "K_DURABLE_WRITES", "K_EACH_QUORUM", 
+                          "K_ENTRIES", "K_EXECUTE", "K_EXISTS", "K_FALSE", 
+                          "K_FILTERING", "K_FINALFUNC", "K_FROM", "K_FULL", 
+                          "K_FUNCTION", "K_FUNCTIONS", "K_GRANT", "K_IF", 
+                          "K_IN", "K_INDEX", "K_INFINITY", "K_INITCOND", 
+                          "K_INPUT", "K_INSERT", "K_INTO", "K_IS", "K_JSON", 
+                          "K_KEY", "K_KEYS", "K_KEYSPACE", "K_KEYSPACES", 
+                          "K_LANGUAGE", "K_LEVEL", "K_LIMIT", "K_LOCAL_ONE", 
+                          "K_LOCAL_QUORUM", "K_LOGGED", "K_LOGIN", "K_MATERIALIZED", 
+                          "K_MODIFY", "K_NAN", "K_NORECURSIVE", "K_NOSUPERUSER", 
+                          "K_NOT", "K_NULL", "K_OF", "K_ON", "K_ONE", "K_OPTIONS", 
+                          "K_OR", "K_ORDER", "K_PARTITION", "K_PASSWORD", 
+                          "K_PER", "K_PERMISSION", "K_PERMISSIONS", "K_PRIMARY", 
+                          "K_QUORUM", "K_RENAME", "K_REPLACE", "K_REPLICATION", 
+                          "K_RETURNS", "K_REVOKE", "K_ROLE", "K_ROLES", 
+                          "K_INTERNAL", "K_LDAP", "K_SCHEME", "K_SCHEMA", 
+                          "K_SELECT", "K_SET", "K_SFUNC", "K_STATIC", "K_STORAGE", 
+                          "K_STYPE", "K_SUPERUSER", "K_TABLE", "K_THREE", 
+                          "K_TIMESTAMP", "K_TO", "K_TOKEN", "K_TRIGGER", 
+                          "K_TRUE", "K_TRUNCATE", "K_TTL", "K_TWO", "K_TYPE", 
+                          "K_UNLOGGED", "K_UPDATE", "K_USE", "K_USER", "K_USING", 
+                          "K_UUID", "K_VALUES", "K_VIEW", "K_WHERE", "K_WITH", 
+                          "K_WRITETIME", "K_ASCII", "K_BIGINT", "K_BLOB", 
+                          "K_BOOLEAN", "K_COUNTER", "K_DATE", "K_DECIMAL", 
+                          "K_DOUBLE", "K_FLOAT", "K_FROZEN", "K_INET", "K_INT", 
+                          "K_LIST", "K_MAP", "K_SMALLINT", "K_TEXT", "K_TIMEUUID", 
+                          "K_TIME", "K_TINYINT", "K_TUPLE", "K_VARCHAR", 
+                          "K_VARINT", "CODE_BLOCK", "STRING_LITERAL", "DECIMAL_LITERAL", 
+                          "FLOAT_LITERAL", "HEXADECIMAL_LITERAL", "REAL_LITERAL", 
+                          "OBJECT_NAME", "UUID", "OPERATOR_EQ", "OPERATOR_LT", 
+                          "OPERATOR_GT", "OPERATOR_LTE", "OPERATOR_GTE", 
+                          "K_USERS" ];
+	static ruleNames = [ "LR_BRACKET", "RR_BRACKET", "LC_BRACKET", "RC_BRACKET", 
+                      "LS_BRACKET", "RS_BRACKET", "COMMA", "SEMI", "COLON", 
+                      "SPACE", "SPEC_MYSQL_COMMENT", "COMMENT_INPUT", "LINE_COMMENT", 
+                      "DOT", "STAR", "DIVIDE", "MODULE", "PLUS", "MINUSMINUS", 
+                      "MINUS", "DQUOTE", "SQUOTE", "K_ADD", "K_AGGREGATE", 
+                      "K_ALL", "K_ALLOW", "K_ALTER", "K_AND", "K_ANY", "K_APPLY", 
+                      "K_AS", "K_ASC", "K_AUTHORIZE", "K_BATCH", "K_BEGIN", 
+                      "K_BY", "K_CALLED", "K_CLUSTERING", "K_COLUMNFAMILY", 
+                      "K_COMPACT", "K_CONSISTENCY", "K_CONTAINS", "K_CREATE", 
+                      "K_CUSTOM", "K_DELETE", "K_DESC", "K_DESCRIBE", "K_DISTINCT", 
+                      "K_DROP", "K_DURABLE_WRITES", "K_EACH_QUORUM", "K_ENTRIES", 
+                      "K_EXECUTE", "K_EXISTS", "K_FALSE", "K_FILTERING", 
+                      "K_FINALFUNC", "K_FROM", "K_FULL", "K_FUNCTION", "K_FUNCTIONS", 
+                      "K_GRANT", "K_IF", "K_IN", "K_INDEX", "K_INFINITY", 
+                      "K_INITCOND", "K_INPUT", "K_INSERT", "K_INTO", "K_IS", 
+                      "K_JSON", "K_KEY", "K_KEYS", "K_KEYSPACE", "K_KEYSPACES", 
+                      "K_LANGUAGE", "K_LEVEL", "K_LIMIT", "K_LOCAL_ONE", 
+                      "K_LOCAL_QUORUM", "K_LOGGED", "K_LOGIN", "K_MATERIALIZED", 
+                      "K_MODIFY", "K_NAN", "K_NORECURSIVE", "K_NOSUPERUSER", 
+                      "K_NOT", "K_NULL", "K_OF", "K_ON", "K_ONE", "K_OPTIONS", 
+                      "K_OR", "K_ORDER", "K_PARTITION", "K_PASSWORD", "K_PER", 
+                      "K_PERMISSION", "K_PERMISSIONS", "K_PRIMARY", "K_QUORUM", 
+                      "K_RENAME", "K_REPLACE", "K_REPLICATION", "K_RETURNS", 
+                      "K_REVOKE", "K_ROLE", "K_ROLES", "K_INTERNAL", "K_LDAP", 
+                      "K_SCHEME", "K_SCHEMA", "K_SELECT", "K_SET", "K_SFUNC", 
+                      "K_STATIC", "K_STORAGE", "K_STYPE", "K_SUPERUSER", 
+                      "K_TABLE", "K_THREE", "K_TIMESTAMP", "K_TO", "K_TOKEN", 
+                      "K_TRIGGER", "K_TRUE", "K_TRUNCATE", "K_TTL", "K_TWO", 
+                      "K_TYPE", "K_UNLOGGED", "K_UPDATE", "K_USE", "K_USER", 
+                      "K_USING", "K_UUID", "K_VALUES", "K_VIEW", "K_WHERE", 
+                      "K_WITH", "K_WRITETIME", "K_ASCII", "K_BIGINT", "K_BLOB", 
+                      "K_BOOLEAN", "K_COUNTER", "K_DATE", "K_DECIMAL", "K_DOUBLE", 
+                      "K_FLOAT", "K_FROZEN", "K_INET", "K_INT", "K_LIST", 
+                      "K_MAP", "K_SMALLINT", "K_TEXT", "K_TIMEUUID", "K_TIME", 
+                      "K_TINYINT", "K_TUPLE", "K_VARCHAR", "K_VARINT", "A", 
+                      "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", 
+                      "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", 
+                      "V", "W", "X", "Y", "Z", "CODE_BLOCK_DELIMITER", "CODE_BLOCK_FRAG", 
+                      "HEX_4DIGIT", "OBJECT_NAME_FRAG", "SQUOTA_STRING", 
+                      "CODE_BLOCK", "STRING_LITERAL", "DECIMAL_LITERAL", 
+                      "FLOAT_LITERAL", "HEXADECIMAL_LITERAL", "REAL_LITERAL", 
+                      "OBJECT_NAME", "UUID", "HEX_DIGIT", "DEC_DIGIT", "EXPONENT_NUM_PART", 
+                      "OPERATOR_EQ_FRAG", "OPERATOR_LT_FRAG", "OPERATOR_GT_FRAG", 
+                      "OPERATOR_GTE_FRAG", "OPERATOR_LTE_FRAG", "OPERATOR_EQ", 
+                      "OPERATOR_LT", "OPERATOR_GT", "OPERATOR_LTE", "OPERATOR_GTE", 
+                      "K_USERS" ];
+
+    constructor(input) {
+        super(input)
+        this._interp = new antlr4.atn.LexerATNSimulator(this, atn, decisionsToDFA, new antlr4.PredictionContextCache());
+    }
+
+    get atn() {
+        return atn;
+    }
 }
-
-CqlLexer.prototype = Object.create(antlr4.Lexer.prototype);
-CqlLexer.prototype.constructor = CqlLexer;
-
-Object.defineProperty(CqlLexer.prototype, "atn", {
-        get : function() {
-                return atn;
-        }
-});
 
 CqlLexer.EOF = antlr4.Token.EOF;
 CqlLexer.LR_BRACKET = 1;
@@ -2002,131 +2096,5 @@ CqlLexer.OPERATOR_LTE = 177;
 CqlLexer.OPERATOR_GTE = 178;
 CqlLexer.K_USERS = 179;
 
-CqlLexer.prototype.channelNames = [ "DEFAULT_TOKEN_CHANNEL", "HIDDEN" ];
-
-CqlLexer.prototype.modeNames = [ "DEFAULT_MODE" ];
-
-CqlLexer.prototype.literalNames = [ null, "'('", "')'", "'{'", "'}'", "'['", 
-                                    "']'", "','", "';'", "':'", null, null, 
-                                    null, null, "'.'", "'*'", "'/'", "'%'", 
-                                    "'+'", "'--'", "'-'", "'\"'", "'''" ];
-
-CqlLexer.prototype.symbolicNames = [ null, "LR_BRACKET", "RR_BRACKET", "LC_BRACKET", 
-                                     "RC_BRACKET", "LS_BRACKET", "RS_BRACKET", 
-                                     "COMMA", "SEMI", "COLON", "SPACE", 
-                                     "SPEC_MYSQL_COMMENT", "COMMENT_INPUT", 
-                                     "LINE_COMMENT", "DOT", "STAR", "DIVIDE", 
-                                     "MODULE", "PLUS", "MINUSMINUS", "MINUS", 
-                                     "DQUOTE", "SQUOTE", "K_ADD", "K_AGGREGATE", 
-                                     "K_ALL", "K_ALLOW", "K_ALTER", "K_AND", 
-                                     "K_ANY", "K_APPLY", "K_AS", "K_ASC", 
-                                     "K_AUTHORIZE", "K_BATCH", "K_BEGIN", 
-                                     "K_BY", "K_CALLED", "K_CLUSTERING", 
-                                     "K_COLUMNFAMILY", "K_COMPACT", "K_CONSISTENCY", 
-                                     "K_CONTAINS", "K_CREATE", "K_CUSTOM", 
-                                     "K_DELETE", "K_DESC", "K_DESCRIBE", 
-                                     "K_DISTINCT", "K_DROP", "K_DURABLE_WRITES", 
-                                     "K_EACH_QUORUM", "K_ENTRIES", "K_EXECUTE", 
-                                     "K_EXISTS", "K_FALSE", "K_FILTERING", 
-                                     "K_FINALFUNC", "K_FROM", "K_FULL", 
-                                     "K_FUNCTION", "K_FUNCTIONS", "K_GRANT", 
-                                     "K_IF", "K_IN", "K_INDEX", "K_INFINITY", 
-                                     "K_INITCOND", "K_INPUT", "K_INSERT", 
-                                     "K_INTO", "K_IS", "K_JSON", "K_KEY", 
-                                     "K_KEYS", "K_KEYSPACE", "K_KEYSPACES", 
-                                     "K_LANGUAGE", "K_LEVEL", "K_LIMIT", 
-                                     "K_LOCAL_ONE", "K_LOCAL_QUORUM", "K_LOGGED", 
-                                     "K_LOGIN", "K_MATERIALIZED", "K_MODIFY", 
-                                     "K_NAN", "K_NORECURSIVE", "K_NOSUPERUSER", 
-                                     "K_NOT", "K_NULL", "K_OF", "K_ON", 
-                                     "K_ONE", "K_OPTIONS", "K_OR", "K_ORDER", 
-                                     "K_PARTITION", "K_PASSWORD", "K_PER", 
-                                     "K_PERMISSION", "K_PERMISSIONS", "K_PRIMARY", 
-                                     "K_QUORUM", "K_RENAME", "K_REPLACE", 
-                                     "K_REPLICATION", "K_RETURNS", "K_REVOKE", 
-                                     "K_ROLE", "K_ROLES", "K_INTERNAL", 
-                                     "K_LDAP", "K_SCHEME", "K_SCHEMA", "K_SELECT", 
-                                     "K_SET", "K_SFUNC", "K_STATIC", "K_STORAGE", 
-                                     "K_STYPE", "K_SUPERUSER", "K_TABLE", 
-                                     "K_THREE", "K_TIMESTAMP", "K_TO", "K_TOKEN", 
-                                     "K_TRIGGER", "K_TRUE", "K_TRUNCATE", 
-                                     "K_TTL", "K_TWO", "K_TYPE", "K_UNLOGGED", 
-                                     "K_UPDATE", "K_USE", "K_USER", "K_USING", 
-                                     "K_UUID", "K_VALUES", "K_VIEW", "K_WHERE", 
-                                     "K_WITH", "K_WRITETIME", "K_ASCII", 
-                                     "K_BIGINT", "K_BLOB", "K_BOOLEAN", 
-                                     "K_COUNTER", "K_DATE", "K_DECIMAL", 
-                                     "K_DOUBLE", "K_FLOAT", "K_FROZEN", 
-                                     "K_INET", "K_INT", "K_LIST", "K_MAP", 
-                                     "K_SMALLINT", "K_TEXT", "K_TIMEUUID", 
-                                     "K_TIME", "K_TINYINT", "K_TUPLE", "K_VARCHAR", 
-                                     "K_VARINT", "CODE_BLOCK", "STRING_LITERAL", 
-                                     "DECIMAL_LITERAL", "FLOAT_LITERAL", 
-                                     "HEXADECIMAL_LITERAL", "REAL_LITERAL", 
-                                     "OBJECT_NAME", "UUID", "OPERATOR_EQ", 
-                                     "OPERATOR_LT", "OPERATOR_GT", "OPERATOR_LTE", 
-                                     "OPERATOR_GTE", "K_USERS" ];
-
-CqlLexer.prototype.ruleNames = [ "LR_BRACKET", "RR_BRACKET", "LC_BRACKET", 
-                                 "RC_BRACKET", "LS_BRACKET", "RS_BRACKET", 
-                                 "COMMA", "SEMI", "COLON", "SPACE", "SPEC_MYSQL_COMMENT", 
-                                 "COMMENT_INPUT", "LINE_COMMENT", "DOT", 
-                                 "STAR", "DIVIDE", "MODULE", "PLUS", "MINUSMINUS", 
-                                 "MINUS", "DQUOTE", "SQUOTE", "K_ADD", "K_AGGREGATE", 
-                                 "K_ALL", "K_ALLOW", "K_ALTER", "K_AND", 
-                                 "K_ANY", "K_APPLY", "K_AS", "K_ASC", "K_AUTHORIZE", 
-                                 "K_BATCH", "K_BEGIN", "K_BY", "K_CALLED", 
-                                 "K_CLUSTERING", "K_COLUMNFAMILY", "K_COMPACT", 
-                                 "K_CONSISTENCY", "K_CONTAINS", "K_CREATE", 
-                                 "K_CUSTOM", "K_DELETE", "K_DESC", "K_DESCRIBE", 
-                                 "K_DISTINCT", "K_DROP", "K_DURABLE_WRITES", 
-                                 "K_EACH_QUORUM", "K_ENTRIES", "K_EXECUTE", 
-                                 "K_EXISTS", "K_FALSE", "K_FILTERING", "K_FINALFUNC", 
-                                 "K_FROM", "K_FULL", "K_FUNCTION", "K_FUNCTIONS", 
-                                 "K_GRANT", "K_IF", "K_IN", "K_INDEX", "K_INFINITY", 
-                                 "K_INITCOND", "K_INPUT", "K_INSERT", "K_INTO", 
-                                 "K_IS", "K_JSON", "K_KEY", "K_KEYS", "K_KEYSPACE", 
-                                 "K_KEYSPACES", "K_LANGUAGE", "K_LEVEL", 
-                                 "K_LIMIT", "K_LOCAL_ONE", "K_LOCAL_QUORUM", 
-                                 "K_LOGGED", "K_LOGIN", "K_MATERIALIZED", 
-                                 "K_MODIFY", "K_NAN", "K_NORECURSIVE", "K_NOSUPERUSER", 
-                                 "K_NOT", "K_NULL", "K_OF", "K_ON", "K_ONE", 
-                                 "K_OPTIONS", "K_OR", "K_ORDER", "K_PARTITION", 
-                                 "K_PASSWORD", "K_PER", "K_PERMISSION", 
-                                 "K_PERMISSIONS", "K_PRIMARY", "K_QUORUM", 
-                                 "K_RENAME", "K_REPLACE", "K_REPLICATION", 
-                                 "K_RETURNS", "K_REVOKE", "K_ROLE", "K_ROLES", 
-                                 "K_INTERNAL", "K_LDAP", "K_SCHEME", "K_SCHEMA", 
-                                 "K_SELECT", "K_SET", "K_SFUNC", "K_STATIC", 
-                                 "K_STORAGE", "K_STYPE", "K_SUPERUSER", 
-                                 "K_TABLE", "K_THREE", "K_TIMESTAMP", "K_TO", 
-                                 "K_TOKEN", "K_TRIGGER", "K_TRUE", "K_TRUNCATE", 
-                                 "K_TTL", "K_TWO", "K_TYPE", "K_UNLOGGED", 
-                                 "K_UPDATE", "K_USE", "K_USER", "K_USING", 
-                                 "K_UUID", "K_VALUES", "K_VIEW", "K_WHERE", 
-                                 "K_WITH", "K_WRITETIME", "K_ASCII", "K_BIGINT", 
-                                 "K_BLOB", "K_BOOLEAN", "K_COUNTER", "K_DATE", 
-                                 "K_DECIMAL", "K_DOUBLE", "K_FLOAT", "K_FROZEN", 
-                                 "K_INET", "K_INT", "K_LIST", "K_MAP", "K_SMALLINT", 
-                                 "K_TEXT", "K_TIMEUUID", "K_TIME", "K_TINYINT", 
-                                 "K_TUPLE", "K_VARCHAR", "K_VARINT", "A", 
-                                 "B", "C", "D", "E", "F", "G", "H", "I", 
-                                 "J", "K", "L", "M", "N", "O", "P", "Q", 
-                                 "R", "S", "T", "U", "V", "W", "X", "Y", 
-                                 "Z", "CODE_BLOCK_DELIMITER", "CODE_BLOCK_FRAG", 
-                                 "HEX_4DIGIT", "OBJECT_NAME_FRAG", "SQUOTA_STRING", 
-                                 "CODE_BLOCK", "STRING_LITERAL", "DECIMAL_LITERAL", 
-                                 "FLOAT_LITERAL", "HEXADECIMAL_LITERAL", 
-                                 "REAL_LITERAL", "OBJECT_NAME", "UUID", 
-                                 "HEX_DIGIT", "DEC_DIGIT", "EXPONENT_NUM_PART", 
-                                 "OPERATOR_EQ_FRAG", "OPERATOR_LT_FRAG", 
-                                 "OPERATOR_GT_FRAG", "OPERATOR_GTE_FRAG", 
-                                 "OPERATOR_LTE_FRAG", "OPERATOR_EQ", "OPERATOR_LT", 
-                                 "OPERATOR_GT", "OPERATOR_LTE", "OPERATOR_GTE", 
-                                 "K_USERS" ];
-
-CqlLexer.prototype.grammarFileName = "CqlLexer.g4";
-
 
 exports.CqlLexer = CqlLexer;
-
