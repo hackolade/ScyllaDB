@@ -516,7 +516,7 @@ class Visitor extends CqlParserVisitor {
 
 			return {
 				type: 'reference',
-				$ref: '#/definitions/'+ type
+				$ref: '#/definitions/'+ (type || '').split('.').slice(-1)?.[0] || '',
 			};
 		}
 

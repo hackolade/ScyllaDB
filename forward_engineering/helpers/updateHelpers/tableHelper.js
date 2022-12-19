@@ -150,6 +150,9 @@ const addToKeysHashType = (keysHash, keys) => {
 };
 
 const tableKeysIsEqual = ({ newKeys = [], oldKeys =[], dataSources }) => {
+	if (newKeys.length !== oldKeys.length) {
+		return false;
+	}
 	const newKeysHash = addToKeysHashType(getNamesByIds(newKeys.map(key => key.keyId), dataSources), newKeys);
 	const oldKeysHash = addToKeysHashType(getNamesByIds(oldKeys.map(key => key.keyId), dataSources), oldKeys);
 	const difference = _.differenceWith(_.values(newKeysHash), _.values(oldKeysHash), _.isEqual);
@@ -198,29 +201,13 @@ const getAddTable = (addTableData) => {
 	}
 	let table = addTableData.item;
 	const data = addTableData.data;
-	const tableProperties = table.properties || {};
-	let partitionKeys = [];
-	let clusteringKeys = [];
-	if (tableProperties) {
-		partitionKeys = Object.keys(tableProperties).map(key => {
-			if (tableProperties[key].compositePartitionKey) {
-				return { keyId: tableProperties[key].GUID };
-			}
-			return;
-		}).filter(item => item);
-
-		clusteringKeys = Object.keys(tableProperties).map(key => {
-			if (tableProperties[key].compositeClusteringKey) {
-				return { keyId: tableProperties[key].GUID };
-			}
-			return;
-		}).filter(item => item);
-	}
+	const compositePartitionKey = getTableParameter(table, 'compositePartitionKey') || [];
+	const compositeClusteringKey = getTableParameter(table, 'compositeClusteringKey') || [];
 
 	const entityData = [{
+		compositePartitionKey,
+		compositeClusteringKey,
 		collectionName: addTableData.tableName,
-		compositePartitionKey: [...partitionKeys],
-		compositeClusteringKey: [...clusteringKeys],
 		tableOptions: table.role.tableOptions || '',
 		comments: table.role.comments || '',
 		isActivated: table.role.isActivated,
