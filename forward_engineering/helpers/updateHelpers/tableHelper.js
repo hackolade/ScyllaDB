@@ -17,7 +17,7 @@ const setDependencies = ({ lodash }) => _ = lodash;
 const removeColumnStatement = columnName => `DROP "${columnName}";`;
 const addColumnStatement = columnData => `ADD "${columnData.name}" ${columnData.type}`;
 
-const alterTablePrefix = (tableName, keySpace) => 
+const alterTablePrefix = (tableName, keySpace) =>
 	keySpace ? `ALTER TABLE "${keySpace}"."${tableName}"` : `ALTER TABLE "${tableName}"`;
 
 const getAdd = addData => {
@@ -149,13 +149,23 @@ const addToKeysHashType = (keysHash, keys) => {
 	}, {});
 };
 
+const deleteFalseValuesIfNotPresentInOtherColumn = (left, right) => _.omitBy(left, (value, key) => value === false && !right[key]);
+
+const areTableKeyColumnsEqual = (column1, column2) => {
+	const comparedColumn1 = deleteFalseValuesIfNotPresentInOtherColumn(column1, column2);
+	const comparedColumn2 = deleteFalseValuesIfNotPresentInOtherColumn(column2, column1);
+
+	return _.isEqual(comparedColumn1, comparedColumn2);
+}
+
 const tableKeysIsEqual = ({ newKeys = [], oldKeys =[], dataSources }) => {
 	if (newKeys.length !== oldKeys.length) {
 		return false;
 	}
 	const newKeysHash = addToKeysHashType(getNamesByIds(newKeys.map(key => key.keyId), dataSources), newKeys);
 	const oldKeysHash = addToKeysHashType(getNamesByIds(oldKeys.map(key => key.keyId), dataSources), oldKeys);
-	const difference = _.differenceWith(_.values(newKeysHash), _.values(oldKeysHash), _.isEqual);
+	const difference = _.differenceWith(_.values(newKeysHash), _.values(oldKeysHash), areTableKeyColumnsEqual);
+
 	return _.isEmpty(difference);
 };
 
@@ -165,21 +175,21 @@ const isTableChange = ({ item, dataSources }) => {
 	const compMod = item?.role?.compMod || {};
 	const tableProperties = ['name', 'isActivated'];
 	const { compositeClusteringKey = {}, compositePartitionKey = {} } = compMod || {};
-	const compositeClusteringKeyIsEqual = tableKeysIsEqual({ 
-		newKeys: compositeClusteringKey.new, 
-		oldKeys: compositeClusteringKey.old, 
+	const compositeClusteringKeyIsEqual = tableKeysIsEqual({
+		newKeys: compositeClusteringKey.new,
+		oldKeys: compositeClusteringKey.old,
 		dataSources,
 	});
-	const compositePartitionKeyIsEqual = tableKeysIsEqual({ 
-		newKeys: compositePartitionKey.new, 
-		oldKeys: compositePartitionKey.old, 
+	const compositePartitionKeyIsEqual = tableKeysIsEqual({
+		newKeys: compositePartitionKey.new,
+		oldKeys: compositePartitionKey.old,
 		dataSources,
 	});
 	return !compositeClusteringKeyIsEqual || !compositePartitionKeyIsEqual ||
 		tableProperties.some(property => !_.isEqual(compMod[property]?.new, compMod[property]?.old));
 };
 
-const getDeleteTable = deleteData => { 
+const getDeleteTable = deleteData => {
 	if (isScriptExists(deleteData, 'deleteTable')) {
 		return [];
 	}
@@ -222,7 +232,7 @@ const getAddTable = (addTableData) => {
 		isKeyspaceActivated: addTableData.isKeyspaceActivated,
 	});
 	addScriptToExistScripts(addTableData, 'addTable');
-	
+
 	return [{
 		deleted: false,
 		modified: false,
