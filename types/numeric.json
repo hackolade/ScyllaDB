@@ -24,5 +24,13 @@
 		"enum": [],
 		"mode": "integer",
 		"sample": ""
-	}
+	},
+	"descriptor": [
+		{
+			"schema": {
+				"mode": "integer"
+			},
+			"mode": "smallint"
+		}
+	]
 }
