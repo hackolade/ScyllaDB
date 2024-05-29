@@ -3,11 +3,25 @@ const mergeArrays = (first, sec) => {
 };
 
 const typesCompatibility = {
-	blob: ['ascii', 'bigint', 'boolean', 'decimal', 'double', 'float', 'inet', 'int', 'timestamp', 'timeuuid', 'uuid', 'varchar', 'varint'],
+	blob: [
+		'ascii',
+		'bigint',
+		'boolean',
+		'decimal',
+		'double',
+		'float',
+		'inet',
+		'int',
+		'timestamp',
+		'timeuuid',
+		'uuid',
+		'varchar',
+		'varint',
+	],
 	varint: ['int'],
 	varchar: ['text'],
 	uuid: ['timeuuid'],
-	text: ['varchar']
+	text: ['varchar'],
 };
 
 const checkIsOldModel = modelData => {
@@ -37,11 +51,11 @@ const fieldTypeCompatible = (oldType, newType) => {
 		return false;
 	}
 
-	return true
+	return true;
 };
 
 module.exports = {
 	mergeArrays,
 	checkIsOldModel,
 	fieldTypeCompatible,
-}
+};

@@ -124,9 +124,7 @@ making sure that you maintain a proper JSON format.
 				"shouldValidate": false,
 				"propertyTooltip": "DB vendor",
 				"propertyType": "select",
-				"options": [
-					"ScyllaDB"
-				],
+				"options": ["ScyllaDB"],
 				"disabledOption": false
 			},
 			{
@@ -135,13 +133,7 @@ making sure that you maintain a proper JSON format.
 				"shouldValidate": false,
 				"propertyTooltip": "DB version",
 				"propertyType": "select",
-				"options": [
-					"2021.x",
-					"2020.x",
-					"2019.x",
-					"4.x",
-					"3.x"
-				],
+				"options": ["2021.x", "2020.x", "2019.x", "4.x", "3.x"],
 				"disabledOption": false
 			},
 			{

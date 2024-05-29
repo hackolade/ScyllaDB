@@ -13,115 +13,142 @@ var state = {
 	sshTunnel: null,
 };
 
-module.exports = (_) => {
-
-	const requireKeyStore = (app) => new Promise((resolve, reject) => {
-		return app.require('java-ssl', (err, Keystore) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(Keystore);
-			}
+module.exports = _ => {
+	const requireKeyStore = app =>
+		new Promise((resolve, reject) => {
+			return app.require('java-ssl', (err, Keystore) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(Keystore);
+				}
+			});
 		});
-	});
-	
-	const getCertificatesFromFiles = (info) => {
-		const readFile = (filePath) => filePath ? fs.readFileSync(filePath) : '';
-		
+
+	const getCertificatesFromFiles = info => {
+		const readFile = filePath => (filePath ? fs.readFileSync(filePath) : '');
+
 		try {
 			const ca = readFile(info.sslCaFile);
 			const cert = readFile(info.sslCertFile);
 			const key = readFile(info.sslKeyFile);
-		
+
 			return Promise.resolve({
-				ca, cert, key
+				ca,
+				cert,
+				key,
 			});
 		} catch (e) {
 			return Promise.reject(e);
 		}
 	};
-	
+
 	const getCertificatesFromKeystore = (info, app, logger) => {
-		return requireKeyStore(app).then((Keystore) => {
-			try {
-				const store = Keystore(info.keystore, info.keystorepass);
-				const cert = (store.getCert(info.alias) || '').replace(/\s*-----END CERTIFICATE-----$/, '\n-----END CERTIFICATE-----');
-				const key = store.getPrivateKey(info.alias);
-				let ca = cert;
-	
-				logger.log('info', {
-					message: `[info] certificates successfully retrieved from keystore`,
-					certLength: cert.length,
-					keyLength: key.length,
-					pemCertValidity: cert.startsWith('-----BEGIN CERTIFICATE-----\nMII'),
-					pemKeyValidity: key.startsWith('-----BEGIN PRIVATE KEY-----\nMII'),
-					countOfCerts: (cert.match(/-----BEGIN CERTIFICATE-----/ig) || []).length,
-				}, 'Keystore Info');
+		return requireKeyStore(app)
+			.then(Keystore => {
+				try {
+					const store = Keystore(info.keystore, info.keystorepass);
+					const cert = (store.getCert(info.alias) || '').replace(
+						/\s*-----END CERTIFICATE-----$/,
+						'\n-----END CERTIFICATE-----',
+					);
+					const key = store.getPrivateKey(info.alias);
+					let ca = cert;
 
-				if (info.truststore) {
-					const truststore = Keystore(info.truststore, info.truststorePass || '');
-					ca = (truststore.getCert(info.truststoreAlias || info.alias) || '').replace(/\s*-----END CERTIFICATE-----$/, '\n-----END CERTIFICATE-----');
+					logger.log(
+						'info',
+						{
+							message: `[info] certificates successfully retrieved from keystore`,
+							certLength: cert.length,
+							keyLength: key.length,
+							pemCertValidity: cert.startsWith('-----BEGIN CERTIFICATE-----\nMII'),
+							pemKeyValidity: key.startsWith('-----BEGIN PRIVATE KEY-----\nMII'),
+							countOfCerts: (cert.match(/-----BEGIN CERTIFICATE-----/gi) || []).length,
+						},
+						'Keystore Info',
+					);
 
-					logger.log('info', {
-						message: `[info] certificates successfully retrieved from truststore`,
-						certLength: ca.length,
-						pemCertValidity: ca.startsWith('-----BEGIN CERTIFICATE-----\nMII'),
-						countOfCerts: (ca.match(/-----BEGIN CERTIFICATE-----/ig) || []).length,
-					}, 'Keystore Info');
+					if (info.truststore) {
+						const truststore = Keystore(info.truststore, info.truststorePass || '');
+						ca = (truststore.getCert(info.truststoreAlias || info.alias) || '').replace(
+							/\s*-----END CERTIFICATE-----$/,
+							'\n-----END CERTIFICATE-----',
+						);
+
+						logger.log(
+							'info',
+							{
+								message: `[info] certificates successfully retrieved from truststore`,
+								certLength: ca.length,
+								pemCertValidity: ca.startsWith('-----BEGIN CERTIFICATE-----\nMII'),
+								countOfCerts: (ca.match(/-----BEGIN CERTIFICATE-----/gi) || []).length,
+							},
+							'Keystore Info',
+						);
+					}
+
+					return {
+						cert,
+						key,
+						ca,
+						...analyzeJks(info, logger),
+					};
+				} catch (error) {
+					if (error.message.includes('java.lang.NullPointerException')) {
+						return Promise.reject({
+							message:
+								'Please, check the alias name of the provided JKS certificates. Error message: ' +
+								error.message,
+							error: error.message,
+							stack: error.stack,
+						});
+					}
+
+					return Promise.reject(error);
 				}
-	
-				return {
-					cert,
-					key,
-					ca,
-					...analyzeJks(info, logger)
-				};
-			} catch (error) {
-				if (error.message.includes('java.lang.NullPointerException')) {
-					return Promise.reject({
-						message: 'Please, check the alias name of the provided JKS certificates. Error message: ' + error.message,
-						error: error.message,
+			})
+			.catch(error => {
+				logger.log(
+					'error',
+					{
+						message: error.message,
 						stack: error.stack,
-					});
+					},
+					'Initialization java-ssl failed',
+				);
+
+				const certs = analyzeJks(info, logger);
+
+				if (Object.keys(certs).length === 0) {
+					return Promise.reject(error);
 				}
 
-				return Promise.reject(error);
-			}
-		}).catch(error => {
-			logger.log('error', {
-				message: error.message,
-				stack: error.stack,
-			}, 'Initialization java-ssl failed');
-
-			const certs = analyzeJks(info, logger);
-
-			if (Object.keys(certs).length === 0) {
-				return Promise.reject(error);
-			}
-
-			return certs;
-		});
+				return certs;
+			});
 	};
 
 	const analyzeJks = (info, logger) => {
 		try {
 			const jksJs = require('jks-js');
-			let keystore; 
-			
+			let keystore;
+
 			if (fs.existsSync(info.keystore)) {
-				keystore = jksJs.toPem(
-					fs.readFileSync(info.keystore),
-					info.keystorepass
-				);
-	
+				keystore = jksJs.toPem(fs.readFileSync(info.keystore), info.keystorepass);
+
 				Object.keys(keystore).forEach(alias => {
-					logger.log('info', {
-						type: 'keystore',
-						certLength: _.get(keystore, `[${alias}].cert.length`),
-						keyLength: _.get(keystore, `[${alias}].key.length`),
-						countOfCerts: (_.get(keystore, `[${alias}].cert`, '').match(/-----BEGIN CERTIFICATE-----/ig) || []).length,
-						alias,
-					}, 'jks analyze');
+					logger.log(
+						'info',
+						{
+							type: 'keystore',
+							certLength: _.get(keystore, `[${alias}].cert.length`),
+							keyLength: _.get(keystore, `[${alias}].key.length`),
+							countOfCerts: (
+								_.get(keystore, `[${alias}].cert`, '').match(/-----BEGIN CERTIFICATE-----/gi) || []
+							).length,
+							alias,
+						},
+						'jks analyze',
+					);
 				});
 			} else {
 				logger.log('info', `[info] keystore file not found ${info.keystore}`, 'jks analyze');
@@ -130,18 +157,21 @@ module.exports = (_) => {
 			let truststore;
 
 			if (fs.existsSync(info.truststore)) {
-				truststore = jksJs.toPem(
-					fs.readFileSync(info.truststore),
-					info.truststorePass
-				);
-	
+				truststore = jksJs.toPem(fs.readFileSync(info.truststore), info.truststorePass);
+
 				Object.keys(truststore).forEach(alias => {
-					logger.log('info', {
-						type: 'truststore',
-						certLength: _.get(truststore, `[${alias}].ca.length`),
-						countOfCerts: (_.get(truststore, `[${alias}].ca`, '').match(/-----BEGIN CERTIFICATE-----/ig) || []).length,
-						alias,
-					}, 'jks analyze');
+					logger.log(
+						'info',
+						{
+							type: 'truststore',
+							certLength: _.get(truststore, `[${alias}].ca.length`),
+							countOfCerts: (
+								_.get(truststore, `[${alias}].ca`, '').match(/-----BEGIN CERTIFICATE-----/gi) || []
+							).length,
+							alias,
+						},
+						'jks analyze',
+					);
 				});
 			} else {
 				logger.log('info', `[info] truststore file not found ${info.truststore}`, 'jks analyze');
@@ -150,34 +180,39 @@ module.exports = (_) => {
 			return {
 				cert: _.get(keystore, `[${info.alias}].cert`),
 				key: _.get(keystore, `[${info.alias}].key`),
-				ca: _.get(truststore, `[${info.truststoreAlias || info.alias}].ca`) || _.get(keystore, `[${info.alias}].cert`),
+				ca:
+					_.get(truststore, `[${info.truststoreAlias || info.alias}].ca`) ||
+					_.get(keystore, `[${info.alias}].cert`),
 			};
 		} catch (error) {
 			logger.log('info', `[info] issue with jks-js. Message: ${error.message}`, 'jks analyze');
-			
+
 			return {};
 		}
 	};
-	
-	const isSsl = (ssl) => ssl && ssl !== 'false';
-	
+
+	const isSsl = ssl => ssl && ssl !== 'false';
+
 	const getSslOptions = (info, app, logger) => {
-		const add = (key, value, obj) => !value ? obj : Object.assign({}, obj, {
-			[key]: value
-		});
+		const add = (key, value, obj) =>
+			!value
+				? obj
+				: Object.assign({}, obj, {
+						[key]: value,
+					});
 		if (!isSsl(info.ssl)) {
 			return Promise.resolve({});
 		}
-	
+
 		const host = _.get(info, 'hosts[0].host', '');
 		let sslPromise;
-	
+
 		if (info.ssl === 'jks') {
 			sslPromise = getCertificatesFromKeystore(info, app, logger);
 		} else {
 			sslPromise = getCertificatesFromFiles(info);
 		}
-	
+
 		return sslPromise.then(ssl => {
 			const sslOptions = _.flow([
 				add.bind(null, 'ca', ssl.ca),
@@ -186,9 +221,9 @@ module.exports = (_) => {
 				add.bind(null, 'host', host),
 			])({
 				rejectUnauthorized: !info.disableStrictSsl,
-				host
+				host,
 			});
-		
+
 			return { sslOptions };
 		});
 	};
@@ -197,20 +232,20 @@ module.exports = (_) => {
 		if (info.localDataCenter) {
 			return {
 				localDataCenter: info.localDataCenter,
-				policies : {
-					retry: new CassandraRetryPolicy(logger)
-				}
+				policies: {
+					retry: new CassandraRetryPolicy(logger),
+				},
 			};
 		} else {
 			return {
-				policies : {
-					loadBalancing : new cassandra.policies.loadBalancing.RoundRobinPolicy(),
-					retry: new CassandraRetryPolicy(logger)
-				}
+				policies: {
+					loadBalancing: new cassandra.policies.loadBalancing.RoundRobinPolicy(),
+					retry: new CassandraRetryPolicy(logger),
+				},
 			};
 		}
 	};
-	
+
 	const validateRequestTimeout = (timeout, applicationQueryRequestTimeout) => {
 		const DEFAULT_TIMEOUT = 60 * 1000;
 		const connectionTimeout = Number(timeout);
@@ -233,44 +268,51 @@ module.exports = (_) => {
 		if (!Array.isArray(info.hosts)) {
 			throw new Error('Hosts were not defined');
 		}
-	
+
 		const username = info.user;
 		const password = info.password;
 		const authProvider = new cassandra.auth.PlainTextAuthProvider(username, password);
 		const contactPoints = info.hosts.map(item => `${item.host}:${item.port}`);
 		const readTimeout = validateRequestTimeout(info.requestTimeout, info.queryRequestTimeout);
-		
-		return getSslOptions(info, app, logger)
-			.then(sslOptions => {
-				return new cassandra.Client(Object.assign({
-					contactPoints,
-					authProvider,
-					socketOptions: {
-						readTimeout
-					}
-				}, getPolicy(info, logger), sslOptions));
-			});
+
+		return getSslOptions(info, app, logger).then(sslOptions => {
+			return new cassandra.Client(
+				Object.assign(
+					{
+						contactPoints,
+						authProvider,
+						socketOptions: {
+							readTimeout,
+						},
+					},
+					getPolicy(info, logger),
+					sslOptions,
+				),
+			);
+		});
 	};
-	
-	const getCloudClient = (info) => {
+
+	const getCloudClient = info => {
 		const readTimeout = validateRequestTimeout(info.requestTimeout, info.queryRequestTimeout);
 
-		const client = new cassandra.Client(Object.assign({
-			cloud: {
-				secureConnectBundle: info.secureConnectBundle
-			},
-			credentials: {
-				username: info.user,
-				password: info.password
-			},
-			socketOptions: {
-				readTimeout
-			}
-		}));
-	
+		const client = new cassandra.Client(
+			Object.assign({
+				cloud: {
+					secureConnectBundle: info.secureConnectBundle,
+				},
+				credentials: {
+					username: info.user,
+					password: info.password,
+				},
+				socketOptions: {
+					readTimeout,
+				},
+			}),
+		);
+
 		return Promise.resolve(client);
 	};
-	
+
 	const getClient = (app, info, logger) => {
 		if (info.clusterType === 'apolloCloud') {
 			return getCloudClient(info);
@@ -279,7 +321,7 @@ module.exports = (_) => {
 		}
 	};
 
-	const getSshConfig = (info) => {
+	const getSshConfig = info => {
 		if (!Array.isArray(info.hosts)) {
 			throw new Error('Hosts were not defined');
 		}
@@ -293,69 +335,75 @@ module.exports = (_) => {
 			dstPort: host.port,
 			localHost: '127.0.0.1',
 			localPort: host.port,
-			keepAlive: true
+			keepAlive: true,
 		};
 
 		if (info.ssh_method === 'privateKey') {
 			return Object.assign({}, config, {
 				privateKey: fs.readFileSync(info.ssh_key_file),
-				passphrase: info.ssh_key_passphrase
+				passphrase: info.ssh_key_passphrase,
 			});
 		} else {
 			return Object.assign({}, config, {
-				password: info.ssh_password
+				password: info.ssh_password,
 			});
 		}
 	};
 
-	const connectViaSsh = (info) => new Promise((resolve, reject) => {
-		if (!info.ssh) {
-			return resolve({
-				tunnel: null,
-				info
-			});
-		}
-		
-		ssh(getSshConfig(info), (err, tunnel) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve({
-					tunnel,
-					info: Object.assign({}, info, {
-						hosts: info.hosts.map(host => ({
-							...host,
-							host: '127.0.0.1'
-						})),
-					})
+	const connectViaSsh = info =>
+		new Promise((resolve, reject) => {
+			if (!info.ssh) {
+				return resolve({
+					tunnel: null,
+					info,
 				});
 			}
+
+			ssh(getSshConfig(info), (err, tunnel) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve({
+						tunnel,
+						info: Object.assign({}, info, {
+							hosts: info.hosts.map(host => ({
+								...host,
+								host: '127.0.0.1',
+							})),
+						}),
+					});
+				}
+			});
 		});
-	});
 
-	const connect = (app, logger) => (info) => {
+	const connect = (app, logger) => info => {
 		if (!state.client) {
-			return connectViaSsh(info).then(({ info, tunnel }) => {
-				state.sshTunnel = tunnel;
+			return connectViaSsh(info)
+				.then(({ info, tunnel }) => {
+					state.sshTunnel = tunnel;
 
-				return getClient(app, info, logger);
-			})
-				.then((client) => {
+					return getClient(app, info, logger);
+				})
+				.then(client => {
 					state.client = client;
 
 					client.on('log', (type, name, info, furtherInfo) => {
 						if (logger) {
-							logger.log('info', { message: '[' + type + '] ' + name + ': ' + info + '. ' + furtherInfo }, 'Cassandra Info');
+							logger.log(
+								'info',
+								{ message: '[' + type + '] ' + name + ': ' + info + '. ' + furtherInfo },
+								'Cassandra Info',
+							);
 						}
 					});
-	
+
 					return state.client.connect();
 				});
 		}
-		
+
 		return state.client.connect();
 	};
-	
+
 	const close = () => {
 		if (state.client) {
 			state.client.shutdown();
@@ -367,98 +415,107 @@ module.exports = (_) => {
 			state.sshTunnel = null;
 		}
 	};
-	
-	const getKeyspaceMetaData = (keyspace) => {
+
+	const getKeyspaceMetaData = keyspace => {
 		return state.client.metadata.keyspaces[keyspace];
 	};
-	
-	const getKeyspaceInfo = (keyspace) => {
+
+	const getKeyspaceInfo = keyspace => {
 		const metaData = getKeyspaceMetaData(keyspace);
 		const strategy = _.get(metaData, 'strategy', '').split('.').slice(-1).pop();
 		let keyspaceInfo = {
 			code: keyspace,
 			durableWrites: Boolean(metaData.durableWrites),
-			replStrategy: strategy
+			replStrategy: strategy,
 		};
-	
+
 		if (strategy === 'SimpleStrategy') {
 			keyspaceInfo.replFactor = Number(metaData.strategyOptions.replication_factor);
 		} else if (strategy === 'NetworkTopologyStrategy') {
 			keyspaceInfo.dataCenters = Object.keys(metaData.strategyOptions).map(key => {
 				return {
 					dataCenterName: key,
-					replFactorValue: Number(metaData.strategyOptions[key])
+					replFactorValue: Number(metaData.strategyOptions[key]),
 				};
 			});
 		}
 		return keyspaceInfo;
 	};
-	
+
 	const getKeyspacesNames = () => {
 		return Object.keys(state.client.metadata.keyspaces);
 	};
-	
+
 	const isOldVersion = () => {
 		const hosts = _.get(state, 'client.hosts._items');
-	
+
 		if (!hosts) {
 			return false;
 		}
-		
+
 		const host = hosts[Object.keys(hosts)[0]];
-	
+
 		if (!host) {
 			return false;
 		}
-	
+
 		const version = host.getCassandraVersion();
-	
+
 		if (!version.length) {
 			return false;
 		}
-	
+
 		const majorDigit = _.get(version, '[0]');
-	
+
 		return majorDigit < 3;
 	};
-	
-	const getTablesNames = (keyspace) => {
+
+	const getTablesNames = keyspace => {
 		const oldSelectTableNamePrefix = 'SELECT columnfamily_name FROM system.schema_columnfamilies';
 		const newSelectTableNamePrefix = 'SELECT table_name FROM system_schema.tables';
-		const query = isOldVersion() ? `${oldSelectTableNamePrefix} WHERE keyspace_name ='${keyspace}'` : 
-			`${newSelectTableNamePrefix} WHERE keyspace_name ='${keyspace}'`;
-	
+		const query = isOldVersion()
+			? `${oldSelectTableNamePrefix} WHERE keyspace_name ='${keyspace}'`
+			: `${newSelectTableNamePrefix} WHERE keyspace_name ='${keyspace}'`;
+
 		return execute(query);
 	};
-	
-	const getViewsNames = (keyspace) => {
+
+	const getViewsNames = keyspace => {
 		const query = `SELECT view_name FROM system_schema.views WHERE keyspace_name ='${keyspace}'`;
 
-		return execute(query).then(viewData => viewData.rows.map(view => view.view_name), ()=>[]);
+		return execute(query).then(
+			viewData => viewData.rows.map(view => view.view_name),
+			() => [],
+		);
 	};
 
-	const execute = (query) => {
+	const execute = query => {
 		return state.client.execute(query);
 	};
-	
+
 	const getTableMetadata = (keyspace, table) => {
 		return state.client.metadata.getTable(keyspace, table);
 	};
 
 	const getViews = (recordSamplingSettings, keyspace, views, logger) => {
-		return Promise.all(views.map(viewName => {
-			return state.client.metadata.getMaterializedView(keyspace, viewName)
-				.then(view => {
-					return getViewDocumentTemplate(recordSamplingSettings, keyspace, viewName, logger)
-						.then(documentTemplate => ({
-							documentTemplate,
-							view
-						}))
-				}, () => ({
-					documentTemplate: {},
-					view: {}
-				}));
-		}));
+		return Promise.all(
+			views.map(viewName => {
+				return state.client.metadata.getMaterializedView(keyspace, viewName).then(
+					view => {
+						return getViewDocumentTemplate(recordSamplingSettings, keyspace, viewName, logger).then(
+							documentTemplate => ({
+								documentTemplate,
+								view,
+							}),
+						);
+					},
+					() => ({
+						documentTemplate: {},
+						view: {},
+					}),
+				);
+			}),
+		);
 	};
 
 	const getViewDocumentTemplate = (recordSamplingSettings, keyspace, viewName, logger) => {
@@ -466,26 +523,26 @@ module.exports = (_) => {
 	};
 
 	const splitEntityNames = names => {
-		const namesByCategory =_.partition(names, isView);
+		const namesByCategory = _.partition(names, isView);
 
 		return { views: namesByCategory[0].map(name => name.slice(0, -4)), tables: namesByCategory[1] };
-	}
+	};
 
 	const getColumnInfo = (keyspace, table) => {
 		const query = `SELECT * FROM system_schema.columns WHERE keyspace_name='${keyspace}' AND table_name='${table}';`;
 		return execute(query);
 	};
-	
+
 	const prepareConnectionDataItem = (keyspace, tables, views) => {
 		const connectionDataItem = {
 			dbName: keyspace,
 			dbCollections: tables,
-			views
+			views,
 		};
-	
+
 		return connectionDataItem;
 	};
-	
+
 	const getTableSchema = (columns, udtHash, sample = {}) => {
 		let schema = {};
 		columns.forEach(column => {
@@ -497,7 +554,7 @@ module.exports = (_) => {
 		});
 		return { properties: schema };
 	};
-	
+
 	const scanRecords = (keyspace, table, recordSamplingSettings, logger) => {
 		return getSizeOfRows(keyspace, table, recordSamplingSettings).then(
 			size =>
@@ -542,46 +599,45 @@ module.exports = (_) => {
 			return getSampleDocSize(rowsCount, recordSamplingSettings);
 		});
 	};
-	
-	
+
 	const getEntityLevelData = (table, tableName) => {
 		const partitionKeys = handlePartitionKeys(table.partitionKeys);
 		const clusteringKeys = handleClusteringKeys(table);
 		const indexes = handleIndexes(table.indexes);
-	
+
 		return {
 			code: tableName,
 			compositePartitionKey: partitionKeys,
 			compositeClusteringKey: clusteringKeys,
 			SecIndxs: indexes,
 			comments: table.comment,
-			tableOptions: getTableOptions(table)
+			tableOptions: getTableOptions(table),
 		};
 	};
-	
-	const changeQuotes = (str) => {
-		return String(str).replace(/\"/g, '\'');
+
+	const changeQuotes = str => {
+		return String(str).replace(/\"/g, "'");
 	};
-	
-	const getCompaction = (data) => {
+
+	const getCompaction = data => {
 		return Object.assign({}, data.compactionOptions, {
-			class: data.compactionClass
+			class: data.compactionClass,
 		});
 	};
-	
+
 	const getOptionsFromTab = config => {
 		const optionsBlock = config.structure.find(prop => prop.propertyName === 'Options');
 		return optionsBlock.structure;
-	}
-	
-	const getTableOptions = (table) => {
+	};
+
+	const getTableOptions = table => {
 		const [detailsTab] = getEntityLevelConfig();
 		const configOptions = getOptionsFromTab(detailsTab);
 		return createTableOptionsFromMeta(table, configOptions);
 	};
-	
-	const getKeyOrder = (order) => {
-		switch(order) {
+
+	const getKeyOrder = order => {
+		switch (order) {
 			case 'DESC':
 				return 'descending';
 			case 'ASC':
@@ -589,34 +645,34 @@ module.exports = (_) => {
 				return 'ascending';
 		}
 	};
-	const handlePartitionKeys = (partitionKeys) => {
+	const handlePartitionKeys = partitionKeys => {
 		return (partitionKeys || []).map(item => item.name);
 	};
-	
-	const handleClusteringKeys = (table) => {
+
+	const handleClusteringKeys = table => {
 		return (table.clusteringKeys || []).map((item, index) => {
 			const clusteringOrder = table.clusteringOrder ? table.clusteringOrder[index] : '';
 			return {
 				name: item.name,
-				type: getKeyOrder(clusteringOrder)
+				type: getKeyOrder(clusteringOrder),
 			};
 		});
 	};
-	
-	const handleIndexes = (indexes) => {
+
+	const handleIndexes = indexes => {
 		return indexes.map(item => {
 			return {
 				name: item.name,
-				SecIndxKey: [getIndexKey(item.target)]
+				SecIndxKey: [getIndexKey(item.target)],
 			};
 		});
 	};
-	
-	const getIndexKey = (target) => {
+
+	const getIndexKey = target => {
 		return target;
 	};
-	
-	const handleUdts = (udts) => {
+
+	const handleUdts = udts => {
 		if (udts && udts.length) {
 			let schema = {};
 			let nestedUdts = [];
@@ -628,78 +684,81 @@ module.exports = (_) => {
 				schema[name] = {
 					type: 'udt',
 					static: udt.isStatic,
-					properties: getTableSchema(fields, nestedUdts, sample).properties
+					properties: getTableSchema(fields, nestedUdts, sample).properties,
 				};
 			});
 
 			return {
 				...schema,
-				...handleUdts(nestedUdts) || {}
+				...(handleUdts(nestedUdts) || {}),
 			};
 		} else {
 			return null;
 		}
 	};
-	
-	const getUDT = (keyspace) => {
+
+	const getUDT = keyspace => {
 		const query = `SELECT * FROM system_schema.types WHERE keyspace_name='${keyspace}'`;
 		return execute(query);
 	};
-	
-	const getUDF = (keyspace) => {
+
+	const getUDF = keyspace => {
 		const query = `SELECT * FROM system_schema.functions WHERE keyspace_name='${keyspace}'`;
 		return execute(query);
 	};
-	
-	const getUDA = (keyspace) => {
+
+	const getUDA = keyspace => {
 		const query = `SELECT * FROM system_schema.aggregates WHERE keyspace_name='${keyspace}'`;
 		return execute(query);
 	};
-	
-	const removeFrozen = str => str.replace(/frozen\<(.*)\>/i, '$1')
-	
-	const handleUDF = (udf) => {
+
+	const removeFrozen = str => str.replace(/frozen\<(.*)\>/i, '$1');
+
+	const handleUDF = udf => {
 		const udfData = udf.rows.map(item => {
-			const args = item.argument_names.map((name, index) => {
-				return `${name} ${removeFrozen(item.argument_types[index] || '')}`;
-			}).join(', ');
-	
+			const args = item.argument_names
+				.map((name, index) => {
+					return `${name} ${removeFrozen(item.argument_types[index] || '')}`;
+				})
+				.join(', ');
+
 			const deterministic = item.deterministic ? 'DETERMINISTIC' : '';
 			const monotonic = item.monotonic ? 'MONOTONIC ON' + item.monotonic_on.join(', ') : '';
-	
+
 			const func = `CREATE OR REPLACE FUNCTION ${item.function_name} ( ${args} )
 				${item.called_on_null_input ? 'CALLED' : 'RETURNS NULL'} ON NULL INPUT
 				RETURNS ${removeFrozen(item.return_type)}  ${deterministic} ${monotonic}
 				LANGUAGE ${item.language} AS
 				$$ ${item.body} $$ ;`;
-	
+
 			return {
 				name: item.function_name,
-				functionBody: func
+				functionBody: func,
 			};
 		});
 		return udfData;
 	};
-	
-	const handleUDA = (uda) => {
+
+	const handleUDA = uda => {
 		const udaData = uda.rows.map(item => {
 			const args = item.argument_types.map(removeFrozen).join(', ');
-			
-			const aggr = `CREATE OR REPLACE AGGREGATE ${item.aggregate_name} (${args})` +
+
+			const aggr =
+				`CREATE OR REPLACE AGGREGATE ${item.aggregate_name} (${args})` +
 				`\n\t\t\tSFUNC ${item.state_func}` +
 				`\n\t\t\tSTYPE ${removeFrozen(item.state_type)}` +
 				(item.final_func !== null ? `\n\t\t\tFINALFUNC ${item.final_func}` : '') +
 				`\n\t\t\tINITCOND ${item.initcond}` +
 				`${item.deterministic ? '\n\t\t\tDETERMINISTIC' : ''};`;
-	
+
 			return {
 				name: item.aggregate_name,
-				storedProcFunction: aggr
+				storedProcFunction: aggr,
 			};
 		});
 		return udaData;
 	};
-	
+
 	const getViewsData = (views, tableName, tableSchema) => {
 		return views
 			.filter(viewData => _.get(viewData, 'view.tableName') === tableName)
@@ -715,9 +774,9 @@ module.exports = (_) => {
 						compositePartitionKey: handlePartitionKeys(view.partitionKeys),
 						compositeClusteringKey: handleClusteringKeys(view),
 						comments: view.comment,
-						tableOptions: getTableOptions(view)
-					}
-				}
+						tableOptions: getTableOptions(view),
+					},
+				};
 			});
 	};
 
@@ -727,7 +786,7 @@ module.exports = (_) => {
 		}
 		const columns = Object.keys(viewData.columnsByName);
 
-		return { properties: getViewSchema(parentTableSchema, viewData.tableName, columns)}
+		return { properties: getViewSchema(parentTableSchema, viewData.tableName, columns) };
 	};
 
 	const getViewSchema = (tableSchema, tableName, columns) => {
@@ -737,7 +796,7 @@ module.exports = (_) => {
 			}
 
 			return Object.assign({}, schema, {
-				[name]: {$ref: `#collection/definitions/${tableName}/${name}`}
+				[name]: { $ref: `#collection/definitions/${tableName}/${name}` },
 			});
 		}, {});
 	};
@@ -748,7 +807,7 @@ module.exports = (_) => {
 			collectionName: data.tableName,
 			documents: data.records,
 		};
-	
+
 		if (data.table.columns && data.table.columns.length) {
 			packageData.bucketInfo = getKeyspaceInfo(data.keyspaceName);
 			packageData.bucketInfo.UDFs = data.UDFs;
@@ -758,11 +817,11 @@ module.exports = (_) => {
 			const mergedDocument = mergeDocuments(data.records);
 			const schema = getTableSchema(data.table.columns, udtHash, mergedDocument);
 			packageData.validation = {
-				jsonSchema: schema
+				jsonSchema: schema,
 			};
 			packageData.documentTemplate = mergedDocument;
 			packageData.modelDefinitions = {
-				definitions: handleUdts(udtHash)
+				definitions: handleUdts(udtHash),
 			};
 
 			if (!_.isEmpty(data.views)) {
@@ -777,63 +836,62 @@ module.exports = (_) => {
 		}
 		return packageData;
 	};
-	const mergeDocuments = (documents) => {
+	const mergeDocuments = documents => {
 		const split = (arr, f) => {
-			return arr.reduce((result, item) => {
-				if (f(item)) {
-					return [
-						result[0].concat([ item ]),
-						result[1]
-					];
-				} else {
-					return [
-						result[0],
-						result[1].concat([ item ])
-					];
-				}
-			}, [[], []]);
+			return arr.reduce(
+				(result, item) => {
+					if (f(item)) {
+						return [result[0].concat([item]), result[1]];
+					} else {
+						return [result[0], result[1].concat([item])];
+					}
+				},
+				[[], []],
+			);
 		};
-		const uniqByType = (arr) => {
+		const uniqByType = arr => {
 			const hash = {};
-	
+
 			return arr.reduce((result, item) => {
 				if (!hash[typeof item]) {
 					hash[typeof item] = true;
-	
+
 					return result.concat([item]);
 				} else {
 					return result;
 				}
 			}, []);
 		};
-		const mergeByType = (arr) => {
+		const mergeByType = arr => {
 			const [arrays, noArrays] = split(arr, Array.isArray);
 			const [objects, rest] = split(noArrays, isObject);
 			const scalars = uniqByType(rest);
 			const mergedObject = objects.reduce(merge, {});
 			const result = scalars.concat(arrays.reduce(merge, []));
-	
+
 			if (Object.keys(mergedObject).length) {
 				return result.concat([mergedObject]);
 			}
-	
+
 			return result;
 		};
-		const isObject = (obj) => obj && typeof obj === 'object' && !Array.isArray(obj);
+		const isObject = obj => obj && typeof obj === 'object' && !Array.isArray(obj);
 		const mergeArray = (arr1, arr2) => {
 			const arr = arr1.concat(arr2);
 			if (!arr.length) {
 				return [];
 			}
-	
+
 			return mergeByType(arr);
 		};
 		const mergeObjects = (obj1, obj2) => {
-			return Object.keys(obj1).concat(Object.keys(obj2)).reduce((result, key) => {
-				return Object.assign({}, result, {
-					[key]: merge(obj1[key], obj2[key])
-				});
-			}, {});
+			return Object.keys(obj1)
+				.concat(Object.keys(obj2))
+				.reduce((result, key) => {
+					return Object.assign({}, result, {
+						[key]: merge(obj1[key], obj2[key]),
+					});
+				}, {});
 		};
 		const merge = (doc1, doc2) => {
 			if (Array.isArray(doc1) && Array.isArray(doc2)) {
@@ -854,103 +912,102 @@ module.exports = (_) => {
 				return doc2;
 			}
 		};
-	
+
 		if (!Array.isArray(documents) || !documents.length) {
 			return {};
 		}
-		
+
 		try {
 			return JSON.parse(JSON.stringify(documents)).reduce(merge, {});
 		} catch (e) {
 			return {};
 		}
 	};
-	
-	const prepareError = (error) => {
+
+	const prepareError = error => {
 		if (!(error instanceof Error)) {
 			return error;
 		}
-	
+
 		return {
 			message: error.message,
-			stack: error.stack
+			stack: error.stack,
 		};
 	};
-	
+
 	const filterKeyspaces = (keyspaces, systemKeyspaces) => {
 		return _.difference(keyspaces, systemKeyspaces || []);
 	};
-	
-	
+
 	const getSampleDocSize = (count, recordSamplingSettings) => {
 		const limit = Math.ceil((count * recordSamplingSettings.relative.value) / 100);
 
 		return Math.min(limit, recordSamplingSettings.maxValue);
 	};
 
-	const cleanOutComments = (script) => {
+	const cleanOutComments = script => {
 		return script.replace(/\/\*([\s\S]+?)\*\//, '');
 	};
-	
-	const splitScriptByQueries = (script) => {
-		const findFunctionStatements = (script) => {
-			return (script.match(/\$\$([\s\S]+?)\$\$/g) || [])
-				.map(item => item.trim().replace(/(^\$\$|\$\$$)/g, ''));
+
+	const splitScriptByQueries = script => {
+		const findFunctionStatements = script => {
+			return (script.match(/\$\$([\s\S]+?)\$\$/g) || []).map(item => item.trim().replace(/(^\$\$|\$\$$)/g, ''));
 		};
-		const getPlaceholder = (n) => `\$__HACKOLADE__PLACEHOLDER_${n}__\$`;
-		
+		const getPlaceholder = n => `\$__HACKOLADE__PLACEHOLDER_${n}__\$`;
+
 		script = cleanOutComments(script);
-		
+
 		const functionStatements = findFunctionStatements(script);
-	
-		const queries = functionStatements.reduce((script, func, i) => {
-			return script.replace(func, getPlaceholder(i));
-		}, script)
+
+		const queries = functionStatements
+			.reduce((script, func, i) => {
+				return script.replace(func, getPlaceholder(i));
+			}, script)
 			.split(';')
 			.map(query => query.trim())
 			.filter(Boolean);
-	
+
 		return functionStatements.reduce((queries, func, i) => {
 			return queries.map(query => query.replace(getPlaceholder(i), func));
 		}, queries);
 	};
-	
+
 	const batch = (script, progress) => {
 		const queries = splitScriptByQueries(script);
-	
+
 		const totalQueries = queries.length;
 		let currentQuery = 0;
-	
+
 		return promiseSeriesAll(
 			queries.map(query => () => state.client.execute(query)),
-			(result) => {
+			result => {
 				const query = queries[currentQuery];
-	
+
 				progress(query, result, currentQuery, totalQueries);
-	
+
 				currentQuery++;
-			}
+			},
 		).then(
 			result => result,
-			error => Promise.reject({ error, query: queries[currentQuery] })
+			error => Promise.reject({ error, query: queries[currentQuery] }),
 		);
 	};
-	
+
 	const promiseSeriesAll = (promises, callback) => {
 		if (!promises.length) {
 			return Promise.resolve();
 		}
-	
+
 		return promises[0]().then(result => {
 			callback(result);
-	
+
 			return promiseSeriesAll(promises.slice(1), callback);
 		});
 	};
 
 	const isView = name => name.slice(-4) === ' (v)';
-	
-	const filterNullItems = (doc) => {
+
+	const filterNullItems = doc => {
 		if (doc === null) {
 			return undefined;
 		} else if (Array.isArray(doc)) {
@@ -958,7 +1015,7 @@ module.exports = (_) => {
 		} else if (typeof doc === 'object') {
 			return Object.keys(doc).reduce((result, key) => {
 				const item = filterNullItems(doc[key]);
-				
+
 				if (item === undefined) {
 					return result;
 				}
@@ -973,12 +1030,12 @@ module.exports = (_) => {
 		}
 	};
 
-	const getCountLimit = (recordSamplingSettings) => {
-        const per = recordSamplingSettings.relative.value;
-        const max = recordSamplingSettings.maxValue;
+	const getCountLimit = recordSamplingSettings => {
+		const per = recordSamplingSettings.relative.value;
+		const max = recordSamplingSettings.maxValue;
 
-        return Math.round((max / per) * 100);
-    };
+		return Math.round((max / per) * 100);
+	};
 
 	return {
 		connect,
@@ -1006,6 +1063,6 @@ module.exports = (_) => {
 		getViews,
 		getViewsNames,
 		splitEntityNames,
-		filterNullItems
+		filterNullItems,
 	};
-}
+};

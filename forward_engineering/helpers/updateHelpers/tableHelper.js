@@ -1,5 +1,5 @@
-const { getTypeByData } = require("../typeHelper");
-const { getNamesByIds } = require("../schemaHelper");
+const { getTypeByData } = require('../typeHelper');
+const { getNamesByIds } = require('../schemaHelper');
 const { dependencies } = require('../appDependencies');
 const { eachField, getTableNameStatement } = require('../generalHelper');
 const { getTableStatement } = require('../tableHelper');
@@ -12,7 +12,7 @@ let existScript = {
 	deleteTable: [],
 };
 
-const setDependencies = ({ lodash }) => _ = lodash;
+const setDependencies = ({ lodash }) => (_ = lodash);
 
 const removeColumnStatement = columnName => `DROP "${columnName}";`;
 const addColumnStatement = columnData => `ADD "${columnData.name}" ${columnData.type}`;
@@ -26,28 +26,32 @@ const getAdd = addData => {
 	}
 
 	const script = `${alterTablePrefix(addData.tableName, addData.keyspaceName)} ${addColumnStatement(addData.columnData)};`;
-	return [{
-		deleted: false,
-		modified: false,
-		added: true,
-		script,
-		field: 'field',
-	}];
+	return [
+		{
+			deleted: false,
+			modified: false,
+			added: true,
+			script,
+			field: 'field',
+		},
+	];
 };
 
 const getDelete = deleteData => {
 	if (isScriptExists(deleteData)) {
 		return [];
-	};
+	}
 
 	const script = `${alterTablePrefix(deleteData.tableName, deleteData.keyspaceName)} ${removeColumnStatement(deleteData.columnData.name)}`;
-	return [{
-		added: false,
-		modified: false,
-		deleted: true,
-		script,
-		field: 'field',
-	}];
+	return [
+		{
+			added: false,
+			modified: false,
+			deleted: true,
+			script,
+			field: 'field',
+		},
+	];
 };
 
 const generateFullName = data => {
@@ -61,7 +65,7 @@ const addScriptToExistScripts = (data = {}, type = 'modifiedColumn') => {
 	existScript = {
 		...existScript,
 		[type]: [...(existScript?.[type] || []), fullName],
-	}
+	};
 };
 
 const isScriptExists = (data = {}, type = 'modifiedColumn') => {
@@ -82,15 +86,14 @@ const prepareField = (field, dataSources) => {
 				return {
 					...properties,
 					[property.name]: propertiesFromArrayToObj(property),
-				}
-			}, {})
+				};
+			}, {}),
 		};
-
 	};
 
 	const fieldAfterTransform = propertiesFromArrayToObj(field);
 
-	return eachField(fieldAfterTransform, (field) => {
+	return eachField(fieldAfterTransform, field => {
 		if (field?.type !== 'reference' || _.isEmpty(field.refIdPath)) {
 			return field;
 		}
@@ -99,7 +102,7 @@ const prepareField = (field, dataSources) => {
 		return {
 			...field,
 			...preparedField,
-		}
+		};
 	});
 };
 
@@ -125,8 +128,8 @@ const hydrateColumn = ({ tableName, keyspaceName, isOldModel, property, udtMap, 
 			columnData: {
 				name: newField.name,
 				type: newType,
-			}
-		}
+			},
+		},
 	};
 };
 
@@ -143,27 +146,40 @@ const addToKeysHashType = (keysHash, keys) => {
 			...keysHash,
 			[id]: {
 				..._.omit(key, 'type'),
-				...(type ? { type } : {})
-			}
+				...(type ? { type } : {}),
+			},
 		};
 	}, {});
 };
 
-const deleteFalseValuesIfNotPresentInOtherColumn = (left, right) => _.omitBy(left, (value, key) => value === false && !right[key]);
+const deleteFalseValuesIfNotPresentInOtherColumn = (left, right) =>
+	_.omitBy(left, (value, key) => value === false && !right[key]);
 
 const areTableKeyColumnsEqual = (column1, column2) => {
 	const comparedColumn1 = deleteFalseValuesIfNotPresentInOtherColumn(column1, column2);
 	const comparedColumn2 = deleteFalseValuesIfNotPresentInOtherColumn(column2, column1);
 
 	return _.isEqual(comparedColumn1, comparedColumn2);
-}
+};
 
-const tableKeysIsEqual = ({ newKeys = [], oldKeys =[], dataSources }) => {
+const tableKeysIsEqual = ({ newKeys = [], oldKeys = [], dataSources }) => {
 	if (newKeys.length !== oldKeys.length) {
 		return false;
 	}
-	const newKeysHash = addToKeysHashType(getNamesByIds(newKeys.map(key => key.keyId), dataSources), newKeys);
-	const oldKeysHash = addToKeysHashType(getNamesByIds(oldKeys.map(key => key.keyId), dataSources), oldKeys);
+	const newKeysHash = addToKeysHashType(
+		getNamesByIds(
+			newKeys.map(key => key.keyId),
+			dataSources,
+		),
+		newKeys,
+	);
+	const oldKeysHash = addToKeysHashType(
+		getNamesByIds(
+			oldKeys.map(key => key.keyId),
+			dataSources,
+		),
+		oldKeys,
+	);
 	const difference = _.differenceWith(_.values(newKeysHash), _.values(oldKeysHash), areTableKeyColumnsEqual);
 
 	return _.isEmpty(difference);
@@ -185,8 +201,11 @@ const isTableChange = ({ item, dataSources }) => {
 		oldKeys: compositePartitionKey.old,
 		dataSources,
 	});
-	return !compositeClusteringKeyIsEqual || !compositePartitionKeyIsEqual ||
-		tableProperties.some(property => !_.isEqual(compMod[property]?.new, compMod[property]?.old));
+	return (
+		!compositeClusteringKeyIsEqual ||
+		!compositePartitionKeyIsEqual ||
+		tableProperties.some(property => !_.isEqual(compMod[property]?.new, compMod[property]?.old))
+	);
 };
 
 const getDeleteTable = deleteData => {
@@ -196,16 +215,18 @@ const getDeleteTable = deleteData => {
 	const tableStatement = getTableNameStatement(deleteData.keyspaceName, deleteData.tableName);
 	const script = `DROP TABLE IF EXISTS ${tableStatement};`;
 	addScriptToExistScripts(deleteData, 'deleteTable');
-	return [{
-		modified: false,
-		added: false,
-		deleted: true,
-		script,
-		table: 'table',
-	}];
+	return [
+		{
+			modified: false,
+			added: false,
+			deleted: true,
+			script,
+			table: 'table',
+		},
+	];
 };
 
-const getAddTable = (addTableData) => {
+const getAddTable = addTableData => {
 	if (isScriptExists(addTableData, 'addTable')) {
 		return [];
 	}
@@ -214,14 +235,16 @@ const getAddTable = (addTableData) => {
 	const compositePartitionKey = getTableParameter(table, 'compositePartitionKey') || [];
 	const compositeClusteringKey = getTableParameter(table, 'compositeClusteringKey') || [];
 
-	const entityData = [{
-		compositePartitionKey,
-		compositeClusteringKey,
-		collectionName: addTableData.tableName,
-		tableOptions: table.role.tableOptions || '',
-		comments: table.role.comments || '',
-		isActivated: table.role.isActivated,
-	}];
+	const entityData = [
+		{
+			compositePartitionKey,
+			compositeClusteringKey,
+			collectionName: addTableData.tableName,
+			tableOptions: table.role.tableOptions || '',
+			comments: table.role.comments || '',
+			isActivated: table.role.isActivated,
+		},
+	];
 
 	const script = getTableStatement({
 		tableData: table,
@@ -233,13 +256,15 @@ const getAddTable = (addTableData) => {
 	});
 	addScriptToExistScripts(addTableData, 'addTable');
 
-	return [{
-		deleted: false,
-		modified: false,
-		added: true,
-		script,
-		table: 'table',
-	}];
+	return [
+		{
+			deleted: false,
+			modified: false,
+			added: true,
+			script,
+			table: 'table',
+		},
+	];
 };
 
 module.exports = {
@@ -252,4 +277,4 @@ module.exports = {
 	addScriptToExistScripts,
 	getDeleteTable,
 	getAddTable,
-}
+};

@@ -7,7 +7,7 @@ const { getDelete } = require('./tableHelper');
 
 let _;
 
-const setDependencies = ({ lodash }) => _ = lodash;
+const setDependencies = ({ lodash }) => (_ = lodash);
 
 const DEFAULT_KEY_SPACE = { 'Default_Keyspace': [] };
 
@@ -20,17 +20,19 @@ const scriptData = {
 
 const getAlterTypePrefix = keySpaceName => `ALTER TYPE "${keySpaceName}"`;
 
-const getRenameType = (renameData) => 
+const getRenameType = renameData =>
 	`${getAlterTypePrefix(renameData.keySpaceName)}."${renameData.udtName}" 
 	RENAME "${renameData.oldFieldName}" TO "${renameData.newFieldName}";`;
 
-const getDropUDT = (dropUDTData) => ([{
-	...scriptData,
-	script: `DROP TYPE IF EXISTS "${dropUDTData.keyspaceName}"."${dropUDTData.typeName}";`,
-	deleted: true,
-}]);
+const getDropUDT = dropUDTData => [
+	{
+		...scriptData,
+		script: `DROP TYPE IF EXISTS "${dropUDTData.keyspaceName}"."${dropUDTData.typeName}";`,
+		deleted: true,
+	},
+];
 
-const getUpdateType = updateTypeData => 
+const getUpdateType = updateTypeData =>
 	`${getAlterTypePrefix(updateTypeData.keySpaceName)}."${updateTypeData.udtName}" 
 	ALTER "${updateTypeData.columnData.name}" TYPE ${updateTypeData.columnData.type};`;
 
@@ -39,16 +41,14 @@ const getAddToUDT = addToUDTData => {
 	return Object.keys(keySpaces).map(keySpaceName => ({
 		...scriptData,
 		added: true,
-		script:
-		`${getAlterTypePrefix(keySpaceName)}."${udtName}" ADD "${name}" ${type};`
-	})
-	);
+		script: `${getAlterTypePrefix(keySpaceName)}."${udtName}" ADD "${name}" ${type};`,
+	}));
 };
 
-const getCreateUdt = (createData) => 
+const getCreateUdt = createData =>
 	`CREATE TYPE IF NOT EXISTS "${createData.keySpaceName}"."${createData.udtName}" (\n` +
-	`${tab(createData.columnScript)} \n` + 
-	');' ;
+	`${tab(createData.columnScript)} \n` +
+	');';
 
 const getKeySpaces = role => {
 	const keySpaces = role.compMod?.bucketsWithCurrentDefinition;
@@ -66,23 +66,25 @@ const getAddScript = (item, udtMap) => {
 			const udtName = role.code || role.name || '';
 			const script = getCreateUdt({ keySpaceName: currentKeyspace, udtName, columnScript });
 			return {
-					...scriptData,
-					added: true,
-					script
-				};
+				...scriptData,
+				added: true,
+				script,
+			};
 		});
 	}
 
-	return Object.entries(properties)
-		.reduce((scripts, [name, property]) => ([
+	return Object.entries(properties).reduce(
+		(scripts, [name, property]) => [
 			...scripts,
 			...getAddToUDT({
 				type: getTypeByData(property, udtMap),
 				name,
 				keySpaces,
 				udtName: role.code || role.name || '',
-			})
-		]), [])
+			}),
+		],
+		[],
+	);
 };
 
 const prepareField = (field, property) => {
@@ -93,7 +95,7 @@ const prepareField = (field, property) => {
 	return {
 		...field,
 		$ref: property.$ref,
-	}
+	};
 };
 
 const getUpdateScript = (item, data, udtMap) => {
@@ -106,14 +108,15 @@ const getUpdateScript = (item, data, udtMap) => {
 	const script = Object.entries(properties).reduce((script, [propertyName, property]) => {
 		const itemOldName = _.get(property, 'compMod.oldField.name');
 		const itemNewName = _.get(property, 'compMod.newField.name');
-		const { compMod = {} } = property
+		const { compMod = {} } = property;
 
 		const oldFieldType = getTypeByData(prepareField(compMod.oldField, property), udtMap, 'newField');
 		const newFieldType = getTypeByData(prepareField(compMod.newField, property), udtMap, 'oldField');
 
 		const isOldModel = checkIsOldModel(_.get(data, 'modelData'));
 		const newScript = Object.keys(keySpaces).reduce((script, keySpaceName) => {
-			const changeType = newFieldType && 
+			const changeType =
+				newFieldType &&
 				oldFieldType &&
 				newFieldType !== oldFieldType &&
 				fieldTypeCompatible(oldFieldType, newFieldType) &&
@@ -124,18 +127,18 @@ const getUpdateScript = (item, data, udtMap) => {
 					udtName,
 					columnData: {
 						name: propertyName,
-						type: newFieldType
-					}
+						type: newFieldType,
+					},
 				});
 				script = [
-					...script, 
+					...script,
 					{
 						...scriptData,
 						script: updateTypeScript,
 						modified: true,
-					}
+					},
 				];
-			};
+			}
 
 			if (itemNewName && itemOldName && itemOldName !== itemNewName) {
 				const renameScript = getRenameType({
@@ -143,12 +146,15 @@ const getUpdateScript = (item, data, udtMap) => {
 					oldFieldName: itemOldName,
 					newFieldName: itemNewName,
 					udtName,
-				})
-				script = [...script, {
-					...scriptData,
-					script: renameScript,
-					modified: true,
-				}];
+				});
+				script = [
+					...script,
+					{
+						...scriptData,
+						script: renameScript,
+						modified: true,
+					},
+				];
 			}
 
 			return script;
@@ -167,25 +173,23 @@ const getDeleteScript = item => {
 	const keySpaces = getKeySpaces(role);
 	const udtName = role.code || role.name || '';
 
-	const script = Object.entries(keySpaces)
-		.reduce((script, [keyspaceName, keySpace]) => {
-			const newScript = keySpace.reduce((script, table) => {
-				const dropColumnScript = getDelete({
-					tableName: table.collectionName || table.code,
-					keyspaceName,
-					columnData: {
-						name: udtName
-					}
-				});
-				const dropUdtScript = getDropUDT({
-					keyspaceName,
-					typeName: udtName
-				});
-				return [...script, ...dropColumnScript, ...dropUdtScript];
-			}, []);
-			return [...script, ...newScript];
+	const script = Object.entries(keySpaces).reduce((script, [keyspaceName, keySpace]) => {
+		const newScript = keySpace.reduce((script, table) => {
+			const dropColumnScript = getDelete({
+				tableName: table.collectionName || table.code,
+				keyspaceName,
+				columnData: {
+					name: udtName,
+				},
+			});
+			const dropUdtScript = getDropUDT({
+				keyspaceName,
+				typeName: udtName,
+			});
+			return [...script, ...dropColumnScript, ...dropUdtScript];
 		}, []);
-
+		return [...script, ...newScript];
+	}, []);
 
 	return script;
 };
@@ -199,7 +203,6 @@ const getUdtScript = ({ child, mode, data, udtMap }) => {
 		return getUpdateScript(child, data, udtMap);
 	}
 	return getDeleteScript(child);
-
 };
 
 const sortAddedUdt = udt => {
@@ -217,7 +220,7 @@ const sortAddedUdt = udt => {
 	const otherUdt = _.xorWith(items, createdUdt, _.isEqual);
 	createdUdt = createdUdt.map(item => {
 		const itemName = Object.keys(item.properties)[0];
-		return [ itemName, item ];
+		return [itemName, item];
 	});
 
 	const createdUdtNames = createdUdt.map(([itemName, __]) => itemName);
@@ -227,20 +230,21 @@ const sortAddedUdt = udt => {
 		const referencesName = new Set();
 		const child = item.properties[itemName];
 
-		eachField(child || {}, (field) => {
+		eachField(child || {}, field => {
 			if (field.$ref) {
 				const udtName = field.$ref.split('/').pop();
-				referencesName.add(udtName)
+				referencesName.add(udtName);
 			}
 		});
 
-		const referencesNameInUdt = Array.from(referencesName)
-			.filter(name => createdUdtNames.includes(name) && !sortedCreatedUdtNames.includes(name));
+		const referencesNameInUdt = Array.from(referencesName).filter(
+			name => createdUdtNames.includes(name) && !sortedCreatedUdtNames.includes(name),
+		);
 
 		sortedCreatedUdtNames.push(...referencesNameInUdt);
 
 		if (!referencesNameInUdt.length) {
-			const index = sortedCreatedUdtNames.indexOf(itemName)
+			const index = sortedCreatedUdtNames.indexOf(itemName);
 
 			if (index === -1) {
 				sortedCreatedUdtNames.unshift(itemName);
@@ -248,7 +252,7 @@ const sortAddedUdt = udt => {
 				sortedCreatedUdtNames.unshift(...sortedCreatedUdtNames.splice(index, 1));
 			}
 		}
-	})
+	});
 
 	const notSortedUdtNames = createdUdtNames.filter(name => !sortedCreatedUdtNames.includes(name));
 
@@ -256,11 +260,11 @@ const sortAddedUdt = udt => {
 	createdUdt = [...sortedCreatedUdtNames, ...notSortedUdtNames].map(name => createdUdt[name]).filter(Boolean);
 
 	udt.properties.added.items = [...createdUdt, ...otherUdt];
-	
+
 	return udt;
 };
 
 module.exports = {
 	getUdtScript,
-	sortAddedUdt
-}
+	sortAddedUdt,
+};
