@@ -650,10 +650,6 @@ class Visitor extends CqlParserVisitor {
 		return ctx.getText();
 	}
 
-	visitParamName(ctx) {
-		return getName(ctx);
-	}
-
 	visitInitCondDefinition(ctx) {
 		return getName(ctx);
 	}
