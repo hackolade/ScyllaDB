@@ -25,7 +25,7 @@ const applyToInstance = (cassandraHelper) => (connectionInfo, logger, app) => {
 				message: 'Cassandra script has been applied successfully!'
 			}, 'Cassandra script');
 
-			cassandra.close();
+			cassandra.close(app);
 
 			return;
 		}, (commonError) => {
@@ -50,7 +50,7 @@ const applyToInstance = (cassandraHelper) => (connectionInfo, logger, app) => {
 			return Promise.reject(preparedError);
 		})
 		.catch(err => {
-			cassandra.close();
+			cassandra.close(app);
 
 			return Promise.reject(cassandra.prepareError(err));
 		});
