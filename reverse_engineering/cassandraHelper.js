@@ -8,7 +8,7 @@ const { getEntityLevelConfig } = require('../forward_engineering/helpers/general
 const CassandraRetryPolicy = require('./cassandraRetryPolicy');
 const filterComplexUdt = require('./helpers/filterComplexUdt');
 
-var state = {
+const state = {
 	client: null,
 	sshTunnel: null,
 };
