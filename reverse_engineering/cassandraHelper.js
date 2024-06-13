@@ -4,7 +4,7 @@ let _;
 const fs = require('fs');
 const ssh = require('tunnel-ssh');
 const { createTableOptionsFromMeta } = require('./helpers/createTableOptionsFromMeta');
-const { getEntityLevelConfig } = require('../forward_engineering/helpers/generalHelper');
+const { getEntityLevelConfig } = require('../forward_engineering/levelConfigHelper');
 const CassandraRetryPolicy = require('./cassandraRetryPolicy');
 const filterComplexUdt = require('./helpers/filterComplexUdt');
 
