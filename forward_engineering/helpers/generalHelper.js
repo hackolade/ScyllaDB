@@ -1,6 +1,6 @@
 'use strict';
 
-const { getTypesConfig, getFieldLevelConfig } = require('../levelConfigHelper');
+const { getTypesConfig, getFieldLevelConfig } = require('../../helpers/levelConfigHelper');
 
 const TAB_SIZE = 2;
 
