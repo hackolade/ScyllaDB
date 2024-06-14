@@ -355,22 +355,6 @@ module.exports = _ => {
 				const message = '[' + type + '] ' + name + ': ' + info + '. ' + furtherInfo;
 				logger.log('info', { message }, 'Cassandra Info');
 			}
-
-			ssh(getSshConfig(info), (err, tunnel) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve({
-						tunnel,
-						info: Object.assign({}, info, {
-							hosts: info.hosts.map(host => ({
-								...host,
-								host: '127.0.0.1',
-							})),
-						}),
-					});
-				}
-			});
 		});
 
 		return state.client.connect();
