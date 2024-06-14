@@ -1,17 +1,17 @@
-'use strict'
+'use strict';
 
 const attributesForReturn = ['isActivated', 'type', 'compositePartitionKey'];
 
 const getAttributes = (field = {}) => {
 	return attributesForReturn.reduce((fieldAttributes, attribute) => {
 		if (!field.hasOwnProperty(attribute) || field[attribute] === undefined) {
-			return fieldAttributes
+			return fieldAttributes;
 		}
 
 		return {
 			...fieldAttributes,
 			[attribute]: field[attribute],
-		}
+		};
 	}, {});
 };
 
@@ -25,7 +25,7 @@ const getPathById = (schema, id, path) => {
 			if (newPath) {
 				return newPath;
 			} else {
-				const property = schema.properties[propertyName]
+				const property = schema.properties[propertyName];
 				return getPathById(property, id, [...path, property.GUID || property.id]);
 			}
 		}, undefined);
@@ -45,7 +45,9 @@ const getPathById = (schema, id, path) => {
 };
 
 const getRootItemMetadataById = (id, properties) => {
-	const propertyName = Object.keys(properties).find(propertyName => (properties[propertyName].GUID === id || properties[propertyName].id === id));
+	const propertyName = Object.keys(properties).find(
+		propertyName => properties[propertyName].GUID === id || properties[propertyName].id === id,
+	);
 	const propertyValue = properties[propertyName];
 	if (propertyValue && (propertyValue.code || propertyValue.name)) {
 		return { name: propertyValue.code || propertyValue.name, ...getAttributes(properties[propertyName]) };
@@ -54,14 +56,13 @@ const getRootItemMetadataById = (id, properties) => {
 	return { name: propertyName, ...getAttributes(properties[propertyName]) };
 };
 
-
 const findFieldMetadataById = (id, source) => {
 	let path = getPathById(source, id, []);
 
 	if (path) {
 		return getRootItemMetadataById(path[0], source.properties);
 	} else {
-		return { name: "" };
+		return { name: '' };
 	}
 };
 
@@ -71,7 +72,7 @@ const getAttributesDataByIds = (ids, sources) => {
 			const fieldData = findFieldMetadataById(id, sources[i]);
 
 			if (fieldData?.name) {
-				return Object.assign({}, hash, { [id]: fieldData});
+				return Object.assign({}, hash, { [id]: fieldData });
 			}
 		}
 
@@ -81,5 +82,5 @@ const getAttributesDataByIds = (ids, sources) => {
 
 module.exports = {
 	getPathById,
-	getNamesByIds: getAttributesDataByIds
+	getNamesByIds: getAttributesDataByIds,
 };

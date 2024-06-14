@@ -128,7 +128,7 @@ making sure that you maintain a proper JSON format.
 				"propertyKeyword": "compositePartitionKey",
 				"propertyType": "primaryKeySetter",
 				"abbr": "pk,PK"
-			}, 
+			},
 			{
 				"propertyName": "Clustering key",
 				"propertyKeyword": "compositeClusteringKey",
@@ -337,12 +337,7 @@ making sure that you maintain a proper JSON format.
 				"propertyTooltip": "Select from list of options",
 				"propertyType": "select",
 				"shouldValidate": false,
-				"options": [
-					"Confidential",
-					"Operationally Sensitive",
-					"Internal",
-					"Public"
-				]
+				"options": ["Confidential", "Operationally Sensitive", "Internal", "Public"]
 			},
 			{
 				"propertyName": "Comments",
@@ -357,72 +352,71 @@ making sure that you maintain a proper JSON format.
 	},
 	{
 		"lowerTab": "Secondary Indexes",
-		"structure": [{
-			"propertyName": "Secondary Index",
-			"propertyType": "group",
-			"propertyKeyword": "SecIndxs",
-			"propertyTooltip": "",
-			"structure": [
-				{
-					"propertyName": "Name",
-					"propertyKeyword": "name",
-					"propertyTooltip": "",
-					"propertyType": "text"
-				},
-				{
-					"propertyName": "Activated",
-					"propertyKeyword": "isActivated",
-					"propertyTooltip": "Deactivated item will be not included in FE script",
-					"propertyType": "checkbox",
-					"defaultValue": true
-				},
-				{
-					"propertyName": "Key",
-					"propertyKeyword": "SecIndxKey",
-					"propertyType": "fieldList",
-					"template": "orderedList",
-					"attributeList": [
-						"ascending",
-						"descending"
-					]
-				},
-				{
-					"propertyName": "Id",
-					"propertyKeyword": "SecIndxID",
-					"propertyTooltip": "Secondary Index ID",
-					"propertyType": "text"
-				},
-				{
-					"propertyName": "If not exists",
-					"propertyKeyword": "indexIfNotExist",
-					"propertyTooltip": "If specified, creates the index only when it does not exist. The creation of view succeeds (no error is thrown) if the specified view already exists in the system. This parameter is mutually exclusive to OR REPLACE and cannot be specified together.",
-					"defaultValue": false,
-					"propertyType": "checkbox"
-				},
-				{
-					"propertyName": "Description",
-					"propertyKeyword": "SecIndxDescription",
-					"propertyTooltip": "description",
-					"propertyType": "details",
-					"template": "textarea"
-				},
-				{
-					"propertyName": "Function",
-					"propertyKeyword": "SecIndxFunction",
-					"propertyTooltip": "description",
-					"propertyType": "details",
-					"template": "textarea",
-					"markdown": false
-				},
-				{
-					"propertyName": "Comments",
-					"propertyKeyword": "SecIndxComments",
-					"shouldValidate": false,
-					"propertyTooltip": "comments",
-					"propertyType": "details",
-					"template": "textarea"
-				}
-			]
-		}]
+		"structure": [
+			{
+				"propertyName": "Secondary Index",
+				"propertyType": "group",
+				"propertyKeyword": "SecIndxs",
+				"propertyTooltip": "",
+				"structure": [
+					{
+						"propertyName": "Name",
+						"propertyKeyword": "name",
+						"propertyTooltip": "",
+						"propertyType": "text"
+					},
+					{
+						"propertyName": "Activated",
+						"propertyKeyword": "isActivated",
+						"propertyTooltip": "Deactivated item will be not included in FE script",
+						"propertyType": "checkbox",
+						"defaultValue": true
+					},
+					{
+						"propertyName": "Key",
+						"propertyKeyword": "SecIndxKey",
+						"propertyType": "fieldList",
+						"template": "orderedList",
+						"attributeList": ["ascending", "descending"]
+					},
+					{
+						"propertyName": "Id",
+						"propertyKeyword": "SecIndxID",
+						"propertyTooltip": "Secondary Index ID",
+						"propertyType": "text"
+					},
+					{
+						"propertyName": "If not exists",
+						"propertyKeyword": "indexIfNotExist",
+						"propertyTooltip": "If specified, creates the index only when it does not exist. The creation of view succeeds (no error is thrown) if the specified view already exists in the system. This parameter is mutually exclusive to OR REPLACE and cannot be specified together.",
+						"defaultValue": false,
+						"propertyType": "checkbox"
+					},
+					{
+						"propertyName": "Description",
+						"propertyKeyword": "SecIndxDescription",
+						"propertyTooltip": "description",
+						"propertyType": "details",
+						"template": "textarea"
+					},
+					{
+						"propertyName": "Function",
+						"propertyKeyword": "SecIndxFunction",
+						"propertyTooltip": "description",
+						"propertyType": "details",
+						"template": "textarea",
+						"markdown": false
+					},
+					{
+						"propertyName": "Comments",
+						"propertyKeyword": "SecIndxComments",
+						"shouldValidate": false,
+						"propertyTooltip": "comments",
+						"propertyType": "details",
+						"template": "textarea"
+					}
+				]
+			}
+		]
 	}
 ]

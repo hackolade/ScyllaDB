@@ -1,6 +1,6 @@
 const { CqlParserVisitor } = require('./parser/CqlParserVisitor');
 const { CqlParser } = require('./parser/CqlParser');
-const { 
+const {
 	CREATE_COLLECTION_COMMAND,
 	REMOVE_COLLECTION_COMMAND,
 	CREATE_BUCKET_COMMAND,
@@ -32,7 +32,7 @@ const ALLOWED_COMMANDS = [
 	CqlParser.RULE_alterKeyspace,
 	CqlParser.RULE_alterMaterializedView,
 	CqlParser.RULE_createIndex,
-	CqlParser.RULE_alterType
+	CqlParser.RULE_alterType,
 ];
 
 const DEFAULT_TYPE = { type: 'char' };
@@ -40,17 +40,17 @@ const DEFAULT_TYPE = { type: 'char' };
 class Visitor extends CqlParserVisitor {
 	visitCql(ctx) {
 		if (ALLOWED_COMMANDS.includes(ctx.children[0].ruleIndex)) {
-		  return super.visitCql(ctx)[0];
+			return super.visitCql(ctx)[0];
 		}
 		return;
 	}
 
 	visitCreateTable(ctx) {
 		const { properties, keyData } = this.visit(ctx.columnDefinitionList());
-		const collectionName =  this.visit(ctx.table());
+		const collectionName = this.visit(ctx.table());
 		const bucketName = this.getKeyspaceName(ctx);
 		const optionsContext = ctx.withElement();
-		const options = optionsContext ? this.visit(optionsContext) : { partitionKey: [], clusteringKey: []};
+		const options = optionsContext ? this.visit(optionsContext) : { partitionKey: [], clusteringKey: [] };
 		const comments = removeQuotes(options?.comment || '');
 		delete options?.comment;
 		const tableIfNotExist = this.visitFlagValue(ctx, 'ifNotExist');
@@ -68,16 +68,16 @@ class Visitor extends CqlParserVisitor {
 				comments,
 				tableOptions: options,
 				compositePartitionKey: keyData.partitionKey,
-				compositeClusteringKey: mergeClusteringKeys(options.clusteringKey, keyData.clusteringKey ),
-				tableIfNotExist
-			}
-		}
+				compositeClusteringKey: mergeClusteringKeys(options.clusteringKey, keyData.clusteringKey),
+				tableIfNotExist,
+			},
+		};
 	}
 
 	visitCreateKeyspace(ctx) {
-		const name = this.getKeyspaceName(ctx)
+		const name = this.getKeyspaceName(ctx);
 		const replicationProperties = this.visit(ctx.replicationList());
-		const durableWrites = !!(this.visit(ctx.durableWrites()));
+		const durableWrites = !!this.visit(ctx.durableWrites());
 		const keyspaceIfNotExist = this.visitFlagValue(ctx, 'ifNotExist');
 
 		return {
@@ -86,8 +86,8 @@ class Visitor extends CqlParserVisitor {
 			data: {
 				...replicationProperties,
 				durableWrites,
-				keyspaceIfNotExist
-			}
+				keyspaceIfNotExist,
+			},
 		};
 	}
 
@@ -117,8 +117,8 @@ class Visitor extends CqlParserVisitor {
 				tableOptions: options,
 				compositePartitionKey: keyData.partitionKey,
 				compositeClusteringKey: keyData.clusteringKey,
-				viewIfNotExist
-			}
+				viewIfNotExist,
+			},
 		};
 	}
 
@@ -135,35 +135,35 @@ class Visitor extends CqlParserVisitor {
 			collectionName: this.visit(ctx.table()),
 			name,
 			column,
-			indexIfNotExist
+			indexIfNotExist,
 		};
 	}
 
 	visitCreateType(ctx) {
 		const name = this.visit(ctx.type());
-		const properties = listToJson(this.visit(ctx.typeMemberColumnList()))
-	
+		const properties = listToJson(this.visit(ctx.typeMemberColumnList()));
+
 		return {
 			type: CREATE_DEFINITION_COMMAND,
 			name,
-			properties
-		}
+			properties,
+		};
 	}
 
 	visitCreateAggregate(ctx) {
 		const keyspace = this.getKeyspaceName(ctx);
 		const name = this.visit(ctx.aggregate());
-		const [ sFunc, finalFunc ] = this.visit(ctx.functionStatement());
+		const [sFunc, finalFunc] = this.visit(ctx.functionStatement());
 		const fullName = keyspace ? `${keyspace}.${name}` : name;
 		const initCond = this.visit(ctx.initCondDefinition());
 
-		const [ argType, sType ] = ctx.dataType().map(context => context.getText());
+		const [argType, sType] = ctx.dataType().map(context => context.getText());
 
 		let statement = 'CREATE';
 		if (ctx.orReplace()) {
 			statement += ' OR REPLACE';
 		}
-		statement += ` AGGREGATE`
+		statement += ` AGGREGATE`;
 		if (ctx.ifNotExist()) {
 			statement += ' IF NOT EXIST';
 		}
@@ -176,7 +176,7 @@ class Visitor extends CqlParserVisitor {
 			data: {
 				name,
 				storedProcFunction: statement,
-			}
+			},
 		};
 	}
 
@@ -195,7 +195,7 @@ class Visitor extends CqlParserVisitor {
 		if (ctx.orReplace()) {
 			statement += ' OR REPLACE';
 		}
-		statement += ` FUNCTION`
+		statement += ` FUNCTION`;
 		if (ctx.ifNotExist()) {
 			statement += ' IF NOT EXIST';
 		}
@@ -208,19 +208,19 @@ class Visitor extends CqlParserVisitor {
 			data: {
 				name,
 				functionBody: statement,
-			}
+			},
 		};
 	}
 
 	visitUse(ctx) {
 		return {
 			type: USE_BUCKET_COMMAND,
-			bucketName: this.getKeyspaceName(ctx)
-		}
+			bucketName: this.getKeyspaceName(ctx),
+		};
 	}
 
 	visitAlterTable(ctx) {
-		const bucketName =this.getKeyspaceName(ctx);
+		const bucketName = this.getKeyspaceName(ctx);
 		const operationContext = ctx.alterTableOperation();
 		const alterTableAdd = operationContext.alterTableAdd();
 		const alterTableRename = operationContext.alterTableRename();
@@ -232,7 +232,7 @@ class Visitor extends CqlParserVisitor {
 				type: ADD_FIELDS_TO_COLLECTION_COMMAND,
 				collectionName,
 				bucketName,
-				data: listToJson(this.visit(alterTableAdd.alterTableColumnDefinition()))
+				data: listToJson(this.visit(alterTableAdd.alterTableColumnDefinition())),
 			};
 		}
 
@@ -244,10 +244,9 @@ class Visitor extends CqlParserVisitor {
 				collectionName,
 				bucketName,
 				nameFrom: this.visit(column1),
-				nameTo: this.visit(column2) 
-			}
+				nameTo: this.visit(column2),
+			};
 		}
-
 
 		if (alterTableUpdateOptions) {
 			const tableOptions = this.visit(alterTableUpdateOptions.tableOptions());
@@ -257,16 +256,16 @@ class Visitor extends CqlParserVisitor {
 				collectionName,
 				bucketName,
 				data: {
-					tableOptions
-				}
-			}
+					tableOptions,
+				},
+			};
 		}
 	}
 
 	visitAlterKeyspace(ctx) {
 		return {
 			...this.visitCreateKeyspace(ctx),
-			type: UPDATE_BUCKET_COMMAND
+			type: UPDATE_BUCKET_COMMAND,
 		};
 	}
 
@@ -276,14 +275,14 @@ class Visitor extends CqlParserVisitor {
 		const options = optionsContext ? this.visit(optionsContext) : {};
 		const keyspace = this.getKeyspaceName(ctx);
 		const bucketName = keyspace ? this.visit(keyspace) : '';
-		
+
 		return {
 			type: UPDATE_VIEW_LEVEL_DATA_COMMAND,
 			name,
 			bucketName,
 			data: {
-				tableOptions: options
-			}
+				tableOptions: options,
+			},
 		};
 	}
 
@@ -298,25 +297,24 @@ class Visitor extends CqlParserVisitor {
 				type: ADD_FIELDS_TO_DEFINITION_COMMAND,
 				name,
 				bucketName,
-				data: listToJson(this.visit(ctx.typeMemberColumnList()))
+				data: listToJson(this.visit(ctx.typeMemberColumnList())),
 			};
 		}
-		
 	}
 
 	visitDropTable(ctx) {
 		return {
 			type: REMOVE_COLLECTION_COMMAND,
 			bucketName: this.getKeyspaceName(ctx),
-			collectionName: this.visit(ctx.table())
-		}
+			collectionName: this.visit(ctx.table()),
+		};
 	}
 
 	visitDropKeyspace(ctx) {
 		return {
 			type: REMOVE_BUCKET_COMMAND,
-			bucketName: this.getKeyspaceName(ctx)
-		}
+			bucketName: this.getKeyspaceName(ctx),
+		};
 	}
 
 	visitDurableWrites(ctx) {
@@ -326,42 +324,42 @@ class Visitor extends CqlParserVisitor {
 	visitReplicationList(ctx) {
 		const items = this.visit(ctx.replicationListItem());
 
-		const definedKeys = ['replStrategy', 'replFactor']
+		const definedKeys = ['replStrategy', 'replFactor'];
 
 		return items.reduce(
-            (replicationProperties, item) => {
-                const key = Object.keys(item)[0];
+			(replicationProperties, item) => {
+				const key = Object.keys(item)[0];
 
-                if (!definedKeys.includes(key)) {
-                    const dataCenter = { dataCenterName: key, replFactorValue: Number(item[key]) || 0 };
+				if (!definedKeys.includes(key)) {
+					const dataCenter = { dataCenterName: key, replFactorValue: Number(item[key]) || 0 };
 
-                    return {
-                        ...replicationProperties,
-                        dataCenters: [...replicationProperties.dataCenters, dataCenter],
-                    };
-                }
+					return {
+						...replicationProperties,
+						dataCenters: [...replicationProperties.dataCenters, dataCenter],
+					};
+				}
 
-                return {
-                    ...replicationProperties,
-                    ...item,
-                };
-            },
-            { dataCenters: [] }
-        );
+				return {
+					...replicationProperties,
+					...item,
+				};
+			},
+			{ dataCenters: [] },
+		);
 	}
 
 	visitReplicationListItem(ctx) {
 		const data = ctx.getText();
 		const REPLICATION_LIST_ITEMS_KEY_MAP = {
 			'class': 'replStrategy',
-			'replication_factor': 'replFactor'
+			'replication_factor': 'replFactor',
 		};
 		const REPLICATION_VALUE_MAP = {
 			'networktopologystrategy': 'NetworkTopologyStrategy',
-			'simplestrategy': 'SimpleStrategy'
+			'simplestrategy': 'SimpleStrategy',
 		};
 
-		const [ key, value ] = data.split(':').map(removeQuotes);
+		const [key, value] = data.split(':').map(removeQuotes);
 		const targetKey = REPLICATION_LIST_ITEMS_KEY_MAP[key.toLowerCase()] || key;
 		let targetValue = REPLICATION_VALUE_MAP[key.toLowerCase()] || value;
 
@@ -369,7 +367,7 @@ class Visitor extends CqlParserVisitor {
 			targetValue = Number(targetValue) || 0;
 		}
 
-		return { [targetKey] : targetValue };
+		return { [targetKey]: targetValue };
 	}
 
 	visitIndexColumnSpec(ctx) {
@@ -396,7 +394,7 @@ class Visitor extends CqlParserVisitor {
 
 	visitColumnList(ctx) {
 		return this.visit(ctx.column());
-	} 
+	}
 
 	visitMaterializedViewOptions(ctx) {
 		return this.visit(ctx.tableOptions());
@@ -408,12 +406,12 @@ class Visitor extends CqlParserVisitor {
 	}
 
 	visitParamList(ctx) {
-		  const params = ctx.param();
-		  if (!params) {
-			  return '()';
-		  }
+		const params = ctx.param();
+		if (!params) {
+			return '()';
+		}
 
-		  return '(' + this.visit(params).join(',') + ')';
+		return '(' + this.visit(params).join(',') + ')';
 	}
 
 	visitParam(ctx) {
@@ -424,42 +422,44 @@ class Visitor extends CqlParserVisitor {
 	}
 
 	visitTableOptions(ctx) {
-		return this.visit(ctx.tableOptionItem()).filter(Boolean).reduce((options, data) => {
-			if(data.key === 'clusteringKey') {
+		return this.visit(ctx.tableOptionItem())
+			.filter(Boolean)
+			.reduce((options, data) => {
+				if (data.key === 'clusteringKey') {
+					return {
+						...options,
+						[data.key]: data.value,
+					};
+				}
+
+				const key = tableOptionsHashMap[data.key.toLowerCase()];
+				if (key === 'caching') {
+					return {
+						...options,
+						[key]: getCachingOptionValue(data.value),
+					};
+				}
+
+				const value = isNaN(data.value) ? removeQuotes(data.value || '') : Number(data.value);
+				if (!key) {
+					const otherProperties = options.otherProperties || [];
+					return {
+						...options,
+						otherProperties: [
+							...otherProperties,
+							{
+								name: data.key,
+								value,
+							},
+						],
+					};
+				}
+
 				return {
 					...options,
-					[data.key]: data.value
-				}
-			}
-
-			const key = tableOptionsHashMap[data.key.toLowerCase()];
-			if (key === 'caching') {
-				return {
-					...options,
-					[key]: getCachingOptionValue(data.value)
-				}
-			}
-
-			const value = isNaN(data.value) ? removeQuotes(data.value || '') : Number(data.value);
-			if (!key) {
-				const otherProperties = options.otherProperties || [];
-				return {
-					...options,
-					otherProperties: [
-						...otherProperties,
-						{
-							name: data.key,
-							value
-						},
-					], 
-				}
-			}
-
-			return {
-				...options,
-				[key]: value
-			}
-		}, {});
+					[key]: value,
+				};
+			}, {});
 	}
 
 	visitTableOptionItem(ctx) {
@@ -467,14 +467,14 @@ class Visitor extends CqlParserVisitor {
 			return {
 				key: 'clusteringKey',
 				value: this.visit(ctx.clusteringOrder()),
-			}
+			};
 		}
 
 		const valueContext = ctx.tableOptionValue() || ctx.optionHash();
 
 		return {
 			key: ctx.tableOptionName().getText(),
-			value: valueContext.getText()
+			value: valueContext.getText(),
 		};
 	}
 
@@ -484,48 +484,50 @@ class Visitor extends CqlParserVisitor {
 
 	visitClusteringOrderColumns(ctx) {
 		const columnsData = {
-		   names: this.visit(ctx.column()),
-		   directions: this.visit(ctx.orderDirection())
-		}
+			names: this.visit(ctx.column()),
+			directions: this.visit(ctx.orderDirection()),
+		};
 
 		return columnsData.names.map((columnName, index) => {
 			return {
 				name: columnName,
 				type: getKeyType(columnsData.directions[index]),
-			}
-		})
+			};
+		});
 	}
 
 	visitOrderDirection(ctx) {
-		return ctx.getText()
+		return ctx.getText();
 	}
 
 	visitDataType(ctx) {
 		const type = this.visit(ctx.dataTypeName());
 		const COMPLEX_TYPES = ['map', 'tuple', 'list', 'set'];
 		const hackoladeType = getTargetType(type);
-		
+
 		const typeDescription = ctx.dataTypeDefinition();
 		if (!hackoladeType) {
 			if (isFrozen(type)) {
 				return {
 					...this.visit(typeDescription)[0],
 					frozen: true,
-				}
+				};
 			}
 
 			return {
 				type: 'reference',
-				$ref: '#/definitions/'+ (type || '').split('.').slice(-1)?.[0] || '',
+				$ref: '#/definitions/' + (type || '').split('.').slice(-1)?.[0] || '',
 			};
 		}
 
 		const isComplexType = COMPLEX_TYPES.includes(hackoladeType.type);
 		if (!isComplexType) {
-			return hackoladeType
+			return hackoladeType;
 		}
 
-		const [ description1, description2 ] = typeDescription ? this.visit(typeDescription) : [ DEFAULT_TYPE, DEFAULT_TYPE ];
+		const [description1, description2] = typeDescription
+			? this.visit(typeDescription)
+			: [DEFAULT_TYPE, DEFAULT_TYPE];
 
 		if (hackoladeType.type === 'map') {
 			return {
@@ -540,25 +542,30 @@ class Visitor extends CqlParserVisitor {
 		return {
 			...hackoladeType,
 			subtype: `${hackoladeType.type}<${complexTypeMapper(description1.type || '')}>`,
-			items: description1
-		}
+			items: description1,
+		};
 	}
 
 	visitColumnDefinitionList(ctx) {
 		const primaryKeyContext = ctx.primaryKeyElement();
-		const keyData = primaryKeyContext ? this.visit(primaryKeyContext) : { partitionKey: [], clusteringKey: []};
+		const keyData = primaryKeyContext ? this.visit(primaryKeyContext) : { partitionKey: [], clusteringKey: [] };
 		const columns = this.visit(ctx.columnDefinition());
-		const primaryKeysFromColumns = columns.filter(column => column.isPrimaryKey).map(column => ({ name: column.name }));
+		const primaryKeysFromColumns = columns
+			.filter(column => column.isPrimaryKey)
+			.map(column => ({ name: column.name }));
 
 		return {
-			properties: columns.reduce((properties, column) => ({
-				...properties,
-				[column.name]: column.type
-			}), {}),
+			properties: columns.reduce(
+				(properties, column) => ({
+					...properties,
+					[column.name]: column.type,
+				}),
+				{},
+			),
 			keyData: {
 				...keyData,
-				partitionKey: [ ...keyData.partitionKey, ...primaryKeysFromColumns]
-			}
+				partitionKey: [...keyData.partitionKey, ...primaryKeysFromColumns],
+			},
 		};
 	}
 
@@ -570,26 +577,27 @@ class Visitor extends CqlParserVisitor {
 		const keyData = this.visit(ctx.primaryKeyDefinition())[0];
 
 		return {
-			partitionKey: keyData.partitionKey.map(key => ({ name: key, type: getKeyType()})),
+			partitionKey: keyData.partitionKey.map(key => ({ name: key, type: getKeyType() })),
 			clusteringKey: keyData.clusteringKey.map(key => ({ name: key, type: getKeyType() })),
-		}
+		};
 	}
 
 	visitSinglePrimaryKey(ctx) {
 		return {
 			partitionKey: [this.visit(ctx.column())],
-			clusteringKey: []
-		}
+			clusteringKey: [],
+		};
 	}
 
 	visitCompoundKey(ctx) {
-		const partitionKey =  [ this.visit(ctx.partitionKey()) ];
+		const partitionKey = [this.visit(ctx.partitionKey())];
 		const clusteringKeyList = ctx.clusteringKeyList();
 		const clusteringKey = clusteringKeyList ? this.visit(clusteringKeyList) : [];
 
 		return {
-		 	partitionKey, clusteringKey
-		}
+			partitionKey,
+			clusteringKey,
+		};
 	}
 
 	visitCompositeKey(ctx) {
@@ -598,8 +606,9 @@ class Visitor extends CqlParserVisitor {
 		const clusteringKey = clusteringKeyList ? this.visit(clusteringKeyList) : [];
 
 		return {
-		 	partitionKey, clusteringKey
-		}
+			partitionKey,
+			clusteringKey,
+		};
 	}
 
 	visitColumnDefinition(ctx) {
@@ -639,10 +648,6 @@ class Visitor extends CqlParserVisitor {
 
 	visitLanguage(ctx) {
 		return ctx.getText();
-	}
-
-	visitParamName(ctx) {
-		return getName(ctx);
 	}
 
 	visitInitCondDefinition(ctx) {
@@ -718,104 +723,112 @@ const getName = context => {
 		return '';
 	}
 	return removeQuotes(context.getText());
-}
+};
 
 const removeQuotes = string => string.replace(/^(['"])([\s\S]*)\1$/m, '$2');
 
-const listToJson = list => list.filter(Boolean).reduce((properties, data, index) => {
-	if (index % 2 === 0) {
-		  return [ ...properties, { key: data } ];
-	}
-	const key = properties[properties.length - 1].key;
-	return [ ...properties.slice(0, -1), { key, value: data} ];
-}, []).reduce((properties, item) => ({
-	...properties, [item.key]: item.value || DEFAULT_TYPE
-}), {});
+const listToJson = list =>
+	list
+		.filter(Boolean)
+		.reduce((properties, data, index) => {
+			if (index % 2 === 0) {
+				return [...properties, { key: data }];
+			}
+			const key = properties[properties.length - 1].key;
+			return [...properties.slice(0, -1), { key, value: data }];
+		}, [])
+		.reduce(
+			(properties, item) => ({
+				...properties,
+				[item.key]: item.value || DEFAULT_TYPE,
+			}),
+			{},
+		);
 
 const isFrozen = type => type.toUpperCase() === 'FROZEN';
 
-const getTargetType = (type) => {
+const getTargetType = type => {
 	type = removeQuotes((type || '').toLowerCase());
-	switch(type) {
-		case "int":
-		  return {
-			type: "numeric",
-			mode: "integer"	
-		};
-		case "smallint":
-		case "tinyint":
-		case "bigint":
-		case "counter":
-		case "decimal":
-		case "double":
-		case "float":
-		case "varint":
-		  return {
-			type: "numeric",
-			mode: type	
-		  };
-		case "text":
-		case "varchar":
-		case "ascii":
-		case "inet":
-		  return {
-			type: "char",
-			mode: type
-		  };
-		case "duration":
+	switch (type) {
+		case 'int':
 			return {
-				type: "duration"
-			}
-		case "pointtype":
-		case "linestringtype":
-		case "polygontype":
-		  return {
-			type: "geospatial"
-		  };
-		case "daterangetype":
-			return {
-				type: "DateRangeType"
-			}
-		case "boolean":
-			return {
-				type: 'bool'
+				type: 'numeric',
+				mode: 'integer',
 			};
-		case "timestamp":
-		case "timeuuid":
-		case "blob":
-		case "date":
-		case "time":
-		case "uuid":
-		  return { type };
-		case "tuple":
-		case "list":
-		case "set":
-		case "map":
-		  return { type };
+		case 'smallint':
+		case 'tinyint':
+		case 'bigint':
+		case 'counter':
+		case 'decimal':
+		case 'double':
+		case 'float':
+		case 'varint':
+			return {
+				type: 'numeric',
+				mode: type,
+			};
+		case 'text':
+		case 'varchar':
+		case 'ascii':
+		case 'inet':
+			return {
+				type: 'char',
+				mode: type,
+			};
+		case 'duration':
+			return {
+				type: 'duration',
+			};
+		case 'pointtype':
+		case 'linestringtype':
+		case 'polygontype':
+			return {
+				type: 'geospatial',
+			};
+		case 'daterangetype':
+			return {
+				type: 'DateRangeType',
+			};
+		case 'boolean':
+			return {
+				type: 'bool',
+			};
+		case 'timestamp':
+		case 'timeuuid':
+		case 'blob':
+		case 'date':
+		case 'time':
+		case 'uuid':
+			return { type };
+		case 'tuple':
+		case 'list':
+		case 'set':
+		case 'map':
+			return { type };
 		default:
-		  return;
+			return;
 	}
 };
 
 const complexTypeMapper = type => {
-	switch(type) {
-		case "numeric":
-		  return "num";
-		case "char":
-		  return "str";
-		case "timestamp":
-			return "ts";
-		case "blob":
-		case "date":
-		case "tuple":
-		case "list":
-		case "set":
-		case "map":
-		  return type;
+	switch (type) {
+		case 'numeric':
+			return 'num';
+		case 'char':
+			return 'str';
+		case 'timestamp':
+			return 'ts';
+		case 'blob':
+		case 'date':
+		case 'tuple':
+		case 'list':
+		case 'set':
+		case 'map':
+			return type;
 		default:
-		  return "udt";
+			return 'udt';
 	}
-}
+};
 
 const tableOptionsHashMap = {
 	'comment': 'comment',
@@ -834,11 +847,10 @@ const tableOptionsHashMap = {
 	'memtable_flush_period_in_ms': 'memtableFlushPeriod',
 };
 
-
 const getViewSchema = (tableName, columns) => {
 	return columns.reduce((schema, name) => {
 		return Object.assign({}, schema, {
-		  [name]: {$ref: `#collection/definitions/${tableName}/${name}`}
+			[name]: { $ref: `#collection/definitions/${tableName}/${name}` },
 		});
 	}, {});
 };
@@ -851,32 +863,32 @@ const getCachingOptionValue = value => {
 			if (key === 'rows_per_partition') {
 				return {
 					...options,
-					rowsPerPartition: data[name]
-				}
+					rowsPerPartition: data[name],
+				};
 			}
 
 			return {
 				...options,
-				[key]: data[name]
-			}
+				[key]: data[name],
+			};
 		}, {});
 	} catch (err) {
 		return {};
 	}
-}
+};
 
-const getKeyType = (type) => {
-	if(type === 'DESC') {
+const getKeyType = type => {
+	if (type === 'DESC') {
 		return 'descending';
 	}
 
 	return 'ascending';
-}
+};
 
 const mergeClusteringKeys = (keysWithDirection = [], keys = []) => {
 	const keysWithDirectionNames = keysWithDirection.map(key => key.name);
 
 	return keys.filter(key => !keysWithDirectionNames.includes(key.name)).concat(keysWithDirection);
-}
+};
 
 module.exports = Visitor;

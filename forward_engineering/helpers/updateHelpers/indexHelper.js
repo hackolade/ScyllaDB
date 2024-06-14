@@ -4,7 +4,7 @@ const { getIndexes } = require('../indexHelper');
 const { getNamesByIds } = require('../schemaHelper');
 let _;
 
-const setDependencies = ({ lodash }) => _ = lodash;
+const setDependencies = ({ lodash }) => (_ = lodash);
 
 let nameCollectionsExistsScript = {
 	dropIndexes: [],
@@ -19,28 +19,34 @@ const checkExistsScript = (keyspaceName, name, type) => {
 	const statement = getTableNameStatement(keyspaceName, name);
 	const filteredScriptName = nameCollectionsExistsScript[type].filter(name => name === statement);
 	return !!filteredScriptName.length;
-}
+};
 
 const setNameCollectionsScript = (keyspaceName, name, type) => {
 	const statement = getTableNameStatement(keyspaceName, name);
-	nameCollectionsExistsScript = { ...nameCollectionsExistsScript, [type]: [...nameCollectionsExistsScript[type], statement] };
+	nameCollectionsExistsScript = {
+		...nameCollectionsExistsScript,
+		[type]: [...nameCollectionsExistsScript[type], statement],
+	};
 };
 
-const unwindIndexes = (indexes) => {
+const unwindIndexes = indexes => {
 	return indexes.reduce((result, index) => {
-		return [...result, ...(index.SecIndxKey || []).map((key, i) => {
-			return Object.assign({}, index, {
-				name: i > 0 ? index.name + '_' + i : index.name,
-				SecIndxKey: [key]
-			});
-		})];
+		return [
+			...result,
+			...(index.SecIndxKey || []).map((key, i) => {
+				return Object.assign({}, index, {
+					name: i > 0 ? index.name + '_' + i : index.name,
+					SecIndxKey: [key],
+				});
+			}),
+		];
 	}, []);
 };
 
 const getDataForScript = (newData, oldData) => {
 	let addData;
 	let dropData;
-	
+
 	if (!newData.length && !oldData.length) {
 		return {};
 	}
@@ -57,22 +63,25 @@ const getDataForScript = (newData, oldData) => {
 	return {
 		addData,
 		dropData,
-	}
-}
-
-const getDropIndexScript = (keyspaceName, tableName, secIndxs = []) => secIndxs.map(index => {
-	const tableNameStatement = getTableNameStatement(keyspaceName, index.name);
-	const tableIndexName = `${tableName}.${index.name}`;
-	const isExistScript = checkExistsScript(keyspaceName, tableIndexName, 'dropIndexes');
-	let script = '';
-	if (index.name && !isExistScript) {
-		script = `DROP INDEX IF EXISTS ${tableNameStatement};`;
-		setNameCollectionsScript(keyspaceName, tableIndexName, 'dropIndexes');
-	}
-	return {
-		...scriptData, deleted: true, script,
 	};
-})
+};
+
+const getDropIndexScript = (keyspaceName, tableName, secIndxs = []) =>
+	secIndxs.map(index => {
+		const tableNameStatement = getTableNameStatement(keyspaceName, index.name);
+		const tableIndexName = `${tableName}.${index.name}`;
+		const isExistScript = checkExistsScript(keyspaceName, tableIndexName, 'dropIndexes');
+		let script = '';
+		if (index.name && !isExistScript) {
+			script = `DROP INDEX IF EXISTS ${tableNameStatement};`;
+			setNameCollectionsScript(keyspaceName, tableIndexName, 'dropIndexes');
+		}
+		return {
+			...scriptData,
+			deleted: true,
+			script,
+		};
+	});
 
 const getAddIndexScript = data => {
 	const { keyspaceName, indexes = [], dataSources, tableName, isActivated } = data;
@@ -84,43 +93,31 @@ const getAddIndexScript = data => {
 		}
 		setNameCollectionsScript(keyspaceName, tableIndexName, 'createIndexes');
 		return true;
-	})
-	const script = getIndexes(
-		filteredIndexes,
-		dataSources,
-		tableName,
-		keyspaceName,
-		isActivated,
-		true,
-	);
+	});
+	const script = getIndexes(filteredIndexes, dataSources, tableName, keyspaceName, isActivated, true);
 	return [{ ...scriptData, added: true, script }];
-}
+};
 
 const getCreatedIndex = data => {
 	const { item, dataSources, tableName, keyspaceName, isActivated } = data;
 	const indexes = _.get(item, 'role.SecIndxs', []);
 
-	const script = getIndexes(
-		indexes,
-		dataSources,
-		tableName,
-		keyspaceName,
-		isActivated,
-		true,
-	);
-	return [{
-		...scriptData,
-		added: true,
-		script,
-	}]
-}
+	const script = getIndexes(indexes, dataSources, tableName, keyspaceName, isActivated, true);
+	return [
+		{
+			...scriptData,
+			added: true,
+			script,
+		},
+	];
+};
 
 const getDeletedIndex = data => {
 	const { item, keyspaceName, tableName } = data;
 	const indexes = _.get(item, 'role.SecIndxs', []);
 	const dropIndexScript = getDropIndexScript(keyspaceName, tableName, indexes);
 	return [...dropIndexScript];
-}
+};
 
 const getUpdateIndex = data => {
 	const { item, keyspaceName, tableName, isActivated, dataSources } = data;
@@ -130,18 +127,14 @@ const getUpdateIndex = data => {
 
 	const dataForIndexScript = getDataForScript(unwindNewIndexes, unwindOldIndexes);
 
-	const dropIndexScript = getDropIndexScript(
-		keyspaceName,
-		tableName,
-		dataForIndexScript.dropData,
-	);
+	const dropIndexScript = getDropIndexScript(keyspaceName, tableName, dataForIndexScript.dropData);
 
 	const addIndexScript = getAddIndexScript({
 		indexes: dataForIndexScript.addData,
 		dataSources,
 		tableName,
 		keyspaceName,
-		isActivated
+		isActivated,
 	});
 
 	return [...dropIndexScript, ...addIndexScript];
@@ -150,13 +143,13 @@ const getUpdateIndex = data => {
 const getFieldDataByKeyId = (dataSources, idToNameHashTable, keyId) => {
 	const fieldData = getNamesByIds([keyId], dataSources)[keyId] || {};
 	if (fieldData.name) {
-		return fieldData
+		return fieldData;
 	}
 
 	const name = idToNameHashTable[keyId] || '';
 
 	return { name };
-}
+};
 
 const getDataColumnIndex = (dataSources, idToNameHashTable, column = {}, key = 'key') => {
 	setDependencies(dependencies);
@@ -170,17 +163,17 @@ const getDataColumnIndex = (dataSources, idToNameHashTable, column = {}, key = '
 };
 
 const createDataSources = (item, data) => {
-	const properties = { ...item.properties || {}, ...item.role.properties || {} };
+	const properties = { ...(item.properties || {}), ...(item.role.properties || {}) };
 	const itemData = { properties, ..._.omit(item.role || {}, ['properties']) };
 
 	return [
-		itemData, 
-		data.modelDefinitions, 
-		data.externalDefinitions, 
+		itemData,
+		data.modelDefinitions,
+		data.externalDefinitions,
 		data.internalDefinitions,
 		{ properties: item?.properties || {} },
 		{ properties: _.get(item, 'role.compMod.newProperties', []) },
-		{ properties: _.get(item, 'role.compMod.oldProperties', []) }
+		{ properties: _.get(item, 'role.compMod.oldProperties', []) },
 	];
 };
 
@@ -208,11 +201,11 @@ const getIndexTable = (item, data, tableIsChange) => {
 	if (compMod.deleted) {
 		return getDeletedIndex({ item, keyspaceName, tableName });
 	}
-	
+
 	return getUpdateIndex({ item, keyspaceName, tableName, dataSources, isActivated });
-}
+};
 
 module.exports = {
 	getIndexTable,
 	getDataColumnIndex,
-}
+};

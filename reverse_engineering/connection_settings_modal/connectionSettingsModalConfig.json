@@ -7,20 +7,22 @@
 				"inputKeyword": "name",
 				"inputType": "text",
 				"inputPlaceholder": "Name"
-				
 			},
 			{
 				"inputLabel": "Installation",
 				"inputKeyword": "clusterType",
 				"inputType": "select",
 				"defaultValue": "",
-				"options": [{
-					"label": "Private",
-					"value": ""
-				}, {
-					"label": "DataStax Astra",
-					"value": "apolloCloud"
-				}]
+				"options": [
+					{
+						"label": "Private",
+						"value": ""
+					},
+					{
+						"label": "DataStax Astra",
+						"value": "apolloCloud"
+					}
+				]
 			},
 			{
 				"inputLabel": "Hosts",
@@ -77,7 +79,7 @@
 				}
 			}
 		]
-	}, 
+	},
 	{
 		"lowerTab": "Authentication",
 		"helpUrl": "https://hackolade.com/help/Usernamepassword2.html",
@@ -87,7 +89,6 @@
 				"inputKeyword": "user",
 				"inputType": "text",
 				"inputPlaceholder": "Username"
-				
 			},
 			{
 				"inputLabel": "Password",
@@ -96,8 +97,8 @@
 				"isHiddenKey": true,
 				"inputPlaceholder": "pwd"
 			}
-		]	
-	}, 
+		]
+	},
 	{
 		"lowerTab": "SSL",
 		"disable": {
@@ -118,16 +119,20 @@
 				"inputLabel": "SSL Type",
 				"inputKeyword": "ssl",
 				"inputType": "select",
-				"options": [{
-					"label": "None",
-					"value": false
-				}, {
-					"label": "Java Keystore",
-					"value": "jks"
-				}, {
-					"label": "Certificates",
-					"value": true
-				}]
+				"options": [
+					{
+						"label": "None",
+						"value": false
+					},
+					{
+						"label": "Java Keystore",
+						"value": "jks"
+					},
+					{
+						"label": "Certificates",
+						"value": true
+					}
+				]
 			},
 			{
 				"inputLabel": "Certificate Authority",
@@ -230,7 +235,7 @@
 				"inputType": "checkbox",
 				"dependency": {
 					"key": "ssl",
-					"value":  [true, "true", "jks"]
+					"value": [true, "true", "jks"]
 				}
 			}
 		]
@@ -279,13 +284,16 @@
 				"inputLabel": "SSH Auth Method",
 				"inputKeyword": "ssh_method",
 				"inputType": "select",
-				"options": [{
-					"value": "privateKey", 
-					"label": "Private Key"
-				}, {
-					"value": "password",
-					"label": "Password"
-				}],
+				"options": [
+					{
+						"value": "privateKey",
+						"label": "Private Key"
+					},
+					{
+						"value": "password",
+						"label": "Password"
+					}
+				],
 				"disable": {
 					"key": "ssh",
 					"value": false
@@ -338,7 +346,7 @@
 				}
 			}
 		]
-	}, 
+	},
 	{
 		"lowerTab": "Advanced",
 		"structure": [
