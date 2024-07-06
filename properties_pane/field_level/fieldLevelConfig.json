@@ -1429,9 +1429,6 @@ making sure that you maintain a proper JSON format.
 					}
 				]
 			},
-			"foreignCollection",
-			"foreignField",
-			"relationshipType",
 			"minItems",
 			"maxItems",
 			"uniqueItems",
