@@ -203,11 +203,9 @@ module.exports = _ => {
 
 		if (jsonType === 'array') {
 			return Array.isArray(value);
-		} else if (jsonType === 'array') {
-			return Object(value) === value;
-		} else {
-			return typeof value === jsonType;
 		}
+
+		return typeof value === jsonType;
 	};
 
 	const getItems = (valueData, sample, udtHash) => {
