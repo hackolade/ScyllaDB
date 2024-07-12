@@ -11,10 +11,12 @@
             "applicationTarget": "ScyllaDB",
             "title": "ScyllaDB",
             "versions": [
-                "2021.x",
+                "2022.x",
+				"2021.x",
                 "2020.x",
                 "2019.x",
-                "4.x",
+                "5.x",
+				"4.x",
                 "3.x"
             ]
         },
