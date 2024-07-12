@@ -1,7 +1,7 @@
 {
 	"model": {
 		"modelName": "New model",
-		"dbVersion": "2021.x",
+		"dbVersion": "5.x",
 		"dbVendor": "ScyllaDB"
 	},
 	"container": {
