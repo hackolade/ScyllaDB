@@ -2,7 +2,7 @@
 
 let _;
 const { dependencies } = require('./appDependencies');
-const { commentDeactivatedStatement } = require('./commentsHelper');
+const { commentDeactivatedStatement, INLINE } = require('./commentsHelper');
 const {
 	retrieveContainerName,
 	retrieveEntityName,
@@ -13,36 +13,48 @@ const { getOptions, getPrimaryKeyList } = require('./tableHelper');
 
 const setDependencies = ({ lodash }) => (_ = lodash);
 
-const getColumnNames = (collectionRefsDefinitionsMap, columns) => {
-	return _.uniq(
-		Object.keys(columns).map(name => {
-			const id = _.get(columns, [name, 'GUID']);
+const getColumnNames = ({ columnsDefinitions, isParentActivated = true }) => {
+	const firstActiveIndex = columnsDefinitions.findIndex(item => item.isActivated);
 
-			const itemData = Object.keys(collectionRefsDefinitionsMap).find(viewFieldId => {
-				const definitionData = collectionRefsDefinitionsMap[viewFieldId];
-
-				return definitionData.definitionId === id;
-			});
-
-			return `"${_.get(itemData, 'name', name)}"`;
-		}),
-	).filter(_.identity);
+	return columnsDefinitions.map(({ name, isActivated }, index) => {
+		const statement = `${index === 0 || firstActiveIndex === index ? '' : ','} ${name}`;
+		return commentDeactivatedStatement(statement, isActivated, isParentActivated, INLINE);
+	});
 };
 
-const getWhereStatement = (primaryKeys, columnsNames) => {
-	if (_.isEmpty(columnsNames)) {
+const getColumnDefinitions = (collectionRefsDefinitionsMap, columns) => {
+	return _.uniq(
+		Object.entries(columns).map(([name, definition]) => {
+			const id = _.get(columns, [name, 'GUID']);
+
+			const [_id, itemData] = Object.entries(collectionRefsDefinitionsMap).find(
+				([viewFieldId, definitionData]) => definitionData.definitionId === id,
+			);
+
+			return {
+				name: `"${_.get(itemData, 'name', name)}"`,
+				isActivated: _.get(definition, 'isActivated', true),
+			};
+		}),
+	).filter(({ name }) => name);
+};
+
+const getWhereStatement = ({ primaryKeysNames, columnsDefinitions, isParentActivated = true }) => {
+	if (_.isEmpty(columnsDefinitions)) {
 		return '';
 	}
+	const firstActiveIndex = columnsDefinitions.findIndex(item => item.isActivated);
+
 	return (
 		'WHERE ' +
-		columnsNames
-			.filter(name => !primaryKeys.includes(name))
-			.reduce((statement, name) => {
+		columnsDefinitions
+			.filter(({ name }) => !primaryKeysNames.includes(name))
+			.reduce((statement, { name, isActivated }, index) => {
 				if (!statement) {
-					return `${name} IS NOT NULL`;
+					return commentDeactivatedStatement(`${name} IS NOT NULL`, isActivated, isParentActivated, INLINE);
 				}
 
-				return `${statement} AND ${name} IS NOT NULL`;
+				return `${statement} ${commentDeactivatedStatement(`${firstActiveIndex ? '' : 'AND '}${name} IS NOT NULL`, isActivated, isParentActivated, INLINE)}`;
 			}, '')
 	);
 };
@@ -149,11 +161,14 @@ module.exports = {
 		if (!columns) {
 			script.push(`AS SELECT * FROM ${tableName};`);
 		} else {
-			const columnsNames = getColumnNames(collectionRefsDefinitionsMap, columns);
-			script.push(`AS SELECT ${columnsNames.join(', ')}`);
+			const columnsDefinitions = getColumnDefinitions(collectionRefsDefinitionsMap, columns);
+			const columnsNames = getColumnNames({ columnsDefinitions, isParentActivated: isViewActivated });
+			script.push(`AS SELECT ${columnsNames.join('')}`);
 			script.push(`FROM ${tableName}`);
 			const primaryKeysNames = getPrimaryKeysNames(collectionRefsDefinitionsMap, viewData);
-			script.push(getWhereStatement(primaryKeysNames, columnsNames));
+			script.push(
+				getWhereStatement({ primaryKeysNames, columnsDefinitions, isParentActivated: isViewActivated }),
+			);
 		}
 
 		if (primaryKeyScript) {
