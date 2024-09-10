@@ -28,7 +28,7 @@ const getColumnDefinitions = (collectionRefsDefinitionsMap, columns) => {
 			const id = _.get(columns, [name, 'GUID']);
 
 			const [_id, itemData] = Object.entries(collectionRefsDefinitionsMap).find(
-				([viewFieldId, definitionData]) => definitionData.definitionId === id,
+				([_viewFieldId, definitionData]) => definitionData.definitionId === id,
 			);
 
 			return {
