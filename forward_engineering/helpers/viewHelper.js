@@ -163,7 +163,7 @@ module.exports = {
 		} else {
 			const columnsDefinitions = getColumnDefinitions(collectionRefsDefinitionsMap, columns);
 			const columnsNames = getColumnNames({ columnsDefinitions, isParentActivated: isViewActivated });
-			script.push(`AS SELECT ${columnsNames.join('')}`);
+			script.push(`AS SELECT${columnsNames.join('')}`);
 			script.push(`FROM ${tableName}`);
 			const primaryKeysNames = getPrimaryKeysNames(collectionRefsDefinitionsMap, viewData);
 			script.push(
