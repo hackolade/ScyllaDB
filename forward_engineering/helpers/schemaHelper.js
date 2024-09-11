@@ -24,10 +24,10 @@ const getPathById = (schema, id, path) => {
 		return Object.keys(schema.properties).reduce((newPath, propertyName) => {
 			if (newPath) {
 				return newPath;
-			} else {
-				const property = schema.properties[propertyName];
-				return getPathById(property, id, [...path, property.GUID || property.id]);
 			}
+
+			const property = schema.properties[propertyName];
+			return getPathById(property, id, [...path, property.GUID || property.id]);
 		}, undefined);
 	} else if (schema.items) {
 		if (Array.isArray(schema.items)) {
