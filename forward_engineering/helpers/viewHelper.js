@@ -22,7 +22,7 @@ const getColumnNames = ({ columnsDefinitions, isParentActivated = true }) => {
 	});
 };
 
-const getColumnDefinitions = (collectionRefsDefinitionsMap = {}, columns) => {
+const getColumnDefinitions = ({ columns, collectionRefsDefinitionsMap = {} }) => {
 	return _.uniq(
 		Object.entries(columns).map(([name, viewColumn]) => {
 			const id = _.get(columns, [name, 'GUID']);
@@ -161,7 +161,7 @@ module.exports = {
 		if (!columns) {
 			script.push(`AS SELECT * FROM ${tableName};`);
 		} else {
-			const columnsDefinitions = getColumnDefinitions(collectionRefsDefinitionsMap, columns);
+			const columnsDefinitions = getColumnDefinitions({ collectionRefsDefinitionsMap, columns });
 			const columnsNames = getColumnNames({ columnsDefinitions, isParentActivated: isViewActivated });
 			script.push(`AS SELECT${columnsNames.join('')}`);
 			script.push(`FROM ${tableName}`);
