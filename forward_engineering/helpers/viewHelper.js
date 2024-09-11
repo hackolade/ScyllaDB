@@ -22,7 +22,7 @@ const getColumnNames = ({ columnsDefinitions, isParentActivated = true }) => {
 	});
 };
 
-const getColumnDefinitions = ({ columns, collectionRefsDefinitionsMap = {} }) => {
+const getColumnDefinitions = ({ columns = {}, collectionRefsDefinitionsMap = {} }) => {
 	return _.uniq(
 		Object.entries(columns).map(([name, viewColumn]) => {
 			const id = _.get(columns, [name, 'GUID']);
@@ -36,7 +36,7 @@ const getColumnDefinitions = ({ columns, collectionRefsDefinitionsMap = {} }) =>
 				isActivated: _.get(viewColumn, 'isActivated', true),
 			};
 		}),
-	).filter(_.identity);
+	).filter(({ name }) => name);
 };
 
 const getWhereStatement = ({ primaryKeysNames, columnsDefinitions, isParentActivated = true }) => {
