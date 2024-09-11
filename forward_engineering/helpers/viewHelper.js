@@ -24,7 +24,7 @@ const getColumnNames = ({ columnsDefinitions, isParentActivated = true }) => {
 
 const getColumnDefinitions = (collectionRefsDefinitionsMap, columns) => {
 	return _.uniq(
-		Object.entries(columns).map(([name, definition]) => {
+		Object.entries(columns).map(([name, viewColumn]) => {
 			const id = _.get(columns, [name, 'GUID']);
 
 			const [, itemData] = Object.entries(collectionRefsDefinitionsMap).find(
@@ -33,7 +33,7 @@ const getColumnDefinitions = (collectionRefsDefinitionsMap, columns) => {
 
 			return {
 				name: `"${_.get(itemData, 'name', name)}"`,
-				isActivated: _.get(definition, 'isActivated', true),
+				isActivated: _.get(viewColumn, 'isActivated', true),
 			};
 		}),
 	).filter(({ name }) => name);
