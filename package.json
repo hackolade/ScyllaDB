@@ -1,6 +1,6 @@
 {
     "name": "ScyllaDB",
-    "version": "0.2.9",
+    "version": "0.2.10",
     "author": "hackolade",
     "engines": {
         "hackolade": "5.1.3",
@@ -22,9 +22,9 @@
         },
         "features": {
             "views": {
-				"enabled": true,
-				"disablePipelines": true
-			},
+                "enabled": true,
+                "disablePipelines": true
+            },
             "nestedCollections": false,
             "disablePatternField": false,
             "enableForwardEngineering": true,
