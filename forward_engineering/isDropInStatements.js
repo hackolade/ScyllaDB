@@ -1,4 +1,5 @@
 const { initPluginConfiguration } = require('../helpers/levelConfigHelper');
+const { isDropInStatements: containsDropScript } = require('./helpers/alterScriptBuilder');
 const { sortUdt, prepareDefinitions } = require('./helpers/udtHelper');
 
 function isDropInStatements(data, logger, callback, app) {
@@ -14,14 +15,14 @@ function isDropInStatements(data, logger, callback, app) {
 				.map(entityId => {
 					const jsonSchema = JSON.parse(data.jsonSchema[entityId]);
 					data.internalDefinitions = sortUdt(JSON.parse(data.internalDefinitions[entityId]));
-					return isDropInStatements(jsonSchema, data.udtTypeMap, data);
+					return containsDropScript(jsonSchema, data.udtTypeMap, data);
 				})
 				.some(Boolean);
 		} else if (data.level === 'entity') {
 			const jsonSchema = JSON.parse(data.jsonSchema);
 			const internalDefinitions = sortUdt(JSON.parse(data.internalDefinitions));
 			data = { ...data, udtTypeMap, modelDefinitions, externalDefinitions, jsonSchema, internalDefinitions };
-			result = isDropInStatements(data.jsonSchema, data.udtTypeMap, data);
+			result = containsDropScript(data.jsonSchema, data.udtTypeMap, data);
 		}
 
 		callback(null, result);
