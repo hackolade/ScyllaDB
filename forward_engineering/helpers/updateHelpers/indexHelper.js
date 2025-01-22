@@ -1,10 +1,7 @@
-const { dependencies } = require('../appDependencies');
+const _ = require('lodash');
 const { getTableNameStatement } = require('../generalHelper');
 const { getIndexes } = require('../indexHelper');
 const { getNamesByIds } = require('../schemaHelper');
-let _;
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 let nameCollectionsExistsScript = {
 	dropIndexes: [],
@@ -34,10 +31,11 @@ const unwindIndexes = indexes => {
 		return [
 			...result,
 			...(index.SecIndxKey || []).map((key, i) => {
-				return Object.assign({}, index, {
+				return {
+					...index,
 					name: i > 0 ? index.name + '_' + i : index.name,
 					SecIndxKey: [key],
-				});
+				};
 			}),
 		];
 	}, []);
@@ -152,7 +150,6 @@ const getFieldDataByKeyId = (dataSources, idToNameHashTable, keyId) => {
 };
 
 const getDataColumnIndex = (dataSources, idToNameHashTable, column = {}, key = 'key') => {
-	setDependencies(dependencies);
 	const keyId = _.get(column, `${key}[0].keyId`, '');
 	const fieldData = getFieldDataByKeyId(dataSources, idToNameHashTable, keyId);
 
@@ -178,8 +175,6 @@ const createDataSources = (item, data) => {
 };
 
 const getIndexTable = (item, data, tableIsChange) => {
-	setDependencies(dependencies);
-
 	const dataSources = createDataSources(item, data);
 	const tableName = item.role?.code || item.role?.name;
 	const keyspaceName = item.role.compMod?.keyspaceName;

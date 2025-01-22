@@ -1,5 +1,3 @@
-'use strict';
-
 const {
 	retrieveContainerName,
 	retrieveEntityName,
@@ -16,14 +14,12 @@ const { getKeyspaceStatement } = require('./helpers/keyspaceHelper');
 const { getAlterScript, isDropInStatements } = require('./helpers/updateHelper');
 const { getViewScript } = require('./helpers/viewHelper');
 const { getCreateTableScript } = require('./helpers/createHelper');
-const { setDependencies } = require('./helpers/appDependencies');
 const { applyToInstance, testConnection } = require('./helpers/dbConnectionService/index');
 const { getScriptOptions } = require('./helpers/getScriptOptions');
 
 module.exports = {
 	generateScript(data, logger, callback, app) {
 		try {
-			setDependencies(app);
 			const { udtTypeMap, modelDefinitions, externalDefinitions } = prepareDefinitions(data);
 			const jsonSchema = JSON.parse(data.jsonSchema);
 			const internalDefinitions = sortUdt(JSON.parse(data.internalDefinitions));
@@ -49,7 +45,6 @@ module.exports = {
 	},
 
 	generateViewScript(data, logger, callback, app) {
-		setDependencies(app);
 		const viewSchema = JSON.parse(data.jsonSchema || '{}');
 
 		const script = getViewScript({
@@ -65,7 +60,6 @@ module.exports = {
 
 	generateContainerScript(data, logger, callback, app) {
 		try {
-			setDependencies(app);
 			if (data.isUpdateScript) {
 				const { udtTypeMap, modelDefinitions, externalDefinitions } = prepareDefinitions(data);
 				data = { ...data, udtTypeMap, modelDefinitions, externalDefinitions };
@@ -104,11 +98,10 @@ module.exports = {
 					const internalDefinitions = sortUdt(JSON.parse(data.internalDefinitions[entityId]));
 					const jsonSchema = JSON.parse(data.jsonSchema[entityId]);
 					const entityData = data.entityData[entityId];
-					const udtTypeMap = Object.assign(
-						{},
-						generalUdtTypeMap,
-						getUdtMap([internalDefinitions, jsonSchema]),
-					);
+					const udtTypeMap = {
+						...generalUdtTypeMap,
+						...getUdtMap([internalDefinitions, jsonSchema]),
+					};
 
 					const entityName = retrieveEntityName(entityData);
 					const isEntityActivated = retrieveIsItemActivated(entityData);
@@ -189,7 +182,6 @@ module.exports = {
 
 	isDropInStatements(data, logger, callback, app) {
 		try {
-			setDependencies(app);
 			let result;
 			const { udtTypeMap, modelDefinitions, externalDefinitions } = prepareDefinitions(data);
 

@@ -19,9 +19,8 @@ const getCreateTableScript = (data, isKeyspaceActivated) => {
 	const isEntityChildrenActivated = isKeyspaceActivated && isEntityActivated;
 	const dataSources = [data.externalDefinitions, data.modelDefinitions, data.internalDefinitions, data.jsonSchema];
 
-	let udtTypeMap = getUdtMap(dataSources);
-
-	let UDT = getUdtScripts(containerName, dataSources, udtTypeMap, isEntityChildrenActivated);
+	const udtTypeMap = getUdtMap(dataSources);
+	const UDT = getUdtScripts(containerName, dataSources, udtTypeMap, isEntityChildrenActivated);
 
 	const table = getTableStatement({
 		tableData: data.jsonSchema,

@@ -45,9 +45,10 @@ const getScalarType = (type, udtTypeMap) => {
 	const geoSpatialType = propertyData => `'${propertyData.subType || 'PointType'}'`;
 	const getJsonType = propertyData => {
 		if (propertyData.physicalType) {
-			return getHandlerByType(propertyData.physicalType)(
-				Object.assign(propertyData, { type: propertyData.physicalType }),
-			);
+			return getHandlerByType(propertyData.physicalType)({
+				...propertyData,
+				type: propertyData.physicalType,
+			});
 		}
 	};
 
@@ -132,9 +133,9 @@ const getStructuralTypeHandler = (type, isNeedToBeFrozen, udtTypeMap) => {
 			);
 
 			return nestedType ?? '';
-		} else {
-			return 'text';
 		}
+
+		return 'text';
 	})(isNeedToBeFrozen, udtTypeMap);
 
 	const typeSet = (propertyData, propertyName) =>
@@ -167,9 +168,9 @@ const getUDTHandler = (type, udtTypeMap, parentIsFrozen) => {
 
 		if (data.frozen && !parentIsFrozen) {
 			return getFrozen(data.name);
-		} else {
-			return data.name;
 		}
+
+		return data.name;
 	};
 };
 
@@ -200,9 +201,9 @@ const getTypeByPropertyData = propertyData => {
 		return propertyData.$ref.split('/').pop();
 	} else if (propertyData.type) {
 		return propertyData.type;
-	} else {
-		return 'char';
 	}
+
+	return 'char';
 };
 
 const getTypeByData = (propertyData, udtTypeMap, propertyName) => {

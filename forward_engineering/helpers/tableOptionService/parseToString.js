@@ -1,8 +1,5 @@
+const _ = require('lodash');
 const { inlineComment } = require('../commentsHelper');
-const { dependencies } = require('../appDependencies');
-let _;
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const NUMERIC = 'numeric';
 const TEXT = 'text';
@@ -87,6 +84,7 @@ const transformDetailsOptions = option => {
 	};
 	const stringValue = getStringValue(option.value);
 	const trimmedValue = stringValue.replace(/\n/g, '');
+
 	return `${convertKeywordToTableOptionName(option['propertyKeyword'])} = ${changeQuotes(trimmedValue)}`;
 };
 
@@ -135,15 +133,21 @@ const transformCachingOption = option => {
 
 		return null;
 	};
-	const createValueObject = (keys, rows) => Object.assign({}, keys && { keys }, rows && { rows_per_partition: rows });
+	const createValueObject = (keys, rows) => ({
+		...(keys && { keys }),
+		...(rows && { rows_per_partition: rows }),
+	});
+
 	const allowedValues = ['ALL', 'NONE'];
 	const keys = validateKeys(option.value['keys']);
 	const rows = validateRows(option.value['rowsPerPartition']);
+
 	if (!keys && !rows) {
 		return null;
 	}
 
 	const stringValue = JSON.stringify(createValueObject(keys, rows));
+
 	return `caching = ${changeQuotes(stringValue)}`;
 };
 
@@ -158,6 +162,7 @@ const generateOptionsStringReducer = (str, option) => {
 	}
 
 	const start = getStringStart(str);
+
 	return str.concat(`${start} ${optionString}\n`);
 };
 
@@ -176,12 +181,11 @@ const addId = (tableId, options) => {
 	}
 
 	const start = getStringStart(options);
+
 	return options.concat(`${start} ID = '${tableId}'\n`);
 };
 
 const addClustering = (clusteringKeys, clusteringKeysHash, options, isParentActivated) => {
-	setDependencies(dependencies);
-
 	if (!clusteringKeys.length) {
 		return options;
 	}
@@ -212,6 +216,7 @@ const addClustering = (clusteringKeys, clusteringKeysHash, options, isParentActi
 	}
 
 	const start = getStringStart(options);
+
 	return options.concat(`${start} CLUSTERING ORDER BY (${fields})\n`);
 };
 

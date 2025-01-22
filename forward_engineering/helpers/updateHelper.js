@@ -1,9 +1,9 @@
+const _ = require('lodash');
 const { getTypeByData } = require('./typeHelper');
 const { commentDeactivatedStatement, getApplyDropStatement, tab } = require('./generalHelper');
 const { mergeValuesWithConfigOptions } = require('./tableHelper');
 const { getDiff } = require('./tableOptionService/getDiff');
 const { parseToString } = require('./tableOptionService/parseToString');
-const { dependencies } = require('./appDependencies');
 const { getKeySpaceScript } = require('./updateHelpers/keySpaceHelper');
 const { mergeArrays, checkIsOldModel, fieldTypeCompatible } = require('./updateHelpers/generalHelper');
 const { getViewScript } = require('./updateHelpers/viewHelper');
@@ -20,12 +20,9 @@ const {
 	getAddTable,
 } = require('./updateHelpers/tableHelper');
 const { getUdtMap } = require('./udtHelper');
-let _;
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const getUpdateType = updateTypeData =>
-	`${alterTablePrefix(updateTypeData.tableName, updateTypeData.keySpace)} 
+	`${alterTablePrefix(updateTypeData.tableName, updateTypeData.keySpace)}
 	ALTER "${updateTypeData.columnData.name}" TYPE ${updateTypeData.columnData.type};`;
 
 const renameColumnStatement = columnData => `RENAME "${columnData.oldName}" TO "${columnData.newName}"`;
@@ -487,12 +484,13 @@ const getAlterTableScript = (child, udtMap, data) => {
 };
 
 const getAlterScript = (child, udtMap, data) => {
-	setDependencies(dependencies);
-	const generalUdtTypeMap = Object.assign({}, udtMap, getUdtMap([child]));
+	const generalUdtTypeMap = { ...udtMap, ...getUdtMap([child]) };
 	let scriptData = getAlterTableScript(child, generalUdtTypeMap, data);
+
 	scriptData = _.uniqWith(scriptData, _.isEqual);
 	scriptData = getCommentedDropScript(scriptData, data);
 	scriptData = sortScript(scriptData);
+
 	return scriptData.filter(Boolean).join('\n\n');
 };
 
@@ -513,7 +511,6 @@ const getCommentedDropScript = (scriptsData, data) => {
 };
 
 const isDropInStatements = (child, udtMap, data) => {
-	setDependencies(dependencies);
 	const scriptsData = getAlterTableScript(child, udtMap, data);
 	return scriptsData.some(scriptData => !!scriptData.script && scriptData.deleted);
 };

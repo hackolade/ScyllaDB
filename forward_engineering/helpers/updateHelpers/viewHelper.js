@@ -1,9 +1,6 @@
+const _ = require('lodash');
 const { getViewScript: generateViewScript, getOptionsScript } = require('../viewHelper');
 const { tab } = require('../generalHelper');
-const { dependencies } = require('../appDependencies');
-let _;
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const scriptData = {
 	added: false,
@@ -47,6 +44,7 @@ const getDifferentOptions = (tableOptions, comments = {}) => {
 	const newTableOptions = Object.entries(newProperties)
 		.map(([property, value]) => [property, getProperty(value, oldProperties[property])])
 		.filter(([__, value]) => value);
+
 	return {
 		comments: newComments,
 		tableOptions: Object.fromEntries(newTableOptions),
@@ -115,6 +113,7 @@ const getModifyView = child => {
 		comments,
 		tableOptions,
 	};
+
 	return [
 		{
 			...scriptData,
@@ -125,8 +124,6 @@ const getModifyView = child => {
 };
 
 const getViewScript = ({ child, data, mode }) => {
-	setDependencies(dependencies);
-
 	if (mode === 'add') {
 		return [
 			{
@@ -144,6 +141,7 @@ const getViewScript = ({ child, data, mode }) => {
 			},
 		];
 	}
+
 	return getModifyView(child);
 };
 

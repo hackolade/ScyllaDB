@@ -1,13 +1,9 @@
-const { dependencies } = require('../appDependencies');
+const _ = require('lodash');
 const { getColumnDefinition } = require('../columnHelper');
 const { tab, eachField } = require('../generalHelper');
 const { getTypeByData } = require('../typeHelper');
 const { checkIsOldModel, fieldTypeCompatible } = require('./generalHelper');
 const { getDelete } = require('./tableHelper');
-
-let _;
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const DEFAULT_KEY_SPACE = { 'Default_Keyspace': [] };
 
@@ -21,7 +17,7 @@ const scriptData = {
 const getAlterTypePrefix = keySpaceName => `ALTER TYPE "${keySpaceName}"`;
 
 const getRenameType = renameData =>
-	`${getAlterTypePrefix(renameData.keySpaceName)}."${renameData.udtName}" 
+	`${getAlterTypePrefix(renameData.keySpaceName)}."${renameData.udtName}"
 	RENAME "${renameData.oldFieldName}" TO "${renameData.newFieldName}";`;
 
 const getDropUDT = dropUDTData => [
@@ -33,11 +29,12 @@ const getDropUDT = dropUDTData => [
 ];
 
 const getUpdateType = updateTypeData =>
-	`${getAlterTypePrefix(updateTypeData.keySpaceName)}."${updateTypeData.udtName}" 
+	`${getAlterTypePrefix(updateTypeData.keySpaceName)}."${updateTypeData.udtName}"
 	ALTER "${updateTypeData.columnData.name}" TYPE ${updateTypeData.columnData.type};`;
 
 const getAddToUDT = addToUDTData => {
 	const { keySpaces, udtName, name, type } = addToUDTData;
+
 	return Object.keys(keySpaces).map(keySpaceName => ({
 		...scriptData,
 		added: true,
@@ -52,6 +49,7 @@ const getCreateUdt = createData =>
 
 const getKeySpaces = role => {
 	const keySpaces = role.compMod?.bucketsWithCurrentDefinition;
+
 	return !_.isEmpty(keySpaces) ? keySpaces : DEFAULT_KEY_SPACE;
 };
 
@@ -195,18 +193,16 @@ const getDeleteScript = item => {
 };
 
 const getUdtScript = ({ child, mode, data, udtMap }) => {
-	setDependencies(dependencies);
-
 	if (mode === 'add') {
 		return getAddScript(child, udtMap);
 	} else if (mode === 'update') {
 		return getUpdateScript(child, data, udtMap);
 	}
+
 	return getDeleteScript(child);
 };
 
 const sortAddedUdt = udt => {
-	setDependencies(dependencies);
 	const items = udt.properties.added?.items;
 	if (!items || !Array.isArray(items)) {
 		return udt;

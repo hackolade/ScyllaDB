@@ -13,7 +13,7 @@ const tab = (text, count = 1) => {
 		.join('\n');
 };
 
-const retrivePropertyFromConfig = (config, tab, propertyName, defaultValue = '') => {
+const retrievePropertyFromConfig = (config, tab, propertyName, defaultValue = '') => {
 	const value = ((config || [])[tab] || {})[propertyName];
 
 	if (value === undefined || value === '') {
@@ -24,17 +24,17 @@ const retrivePropertyFromConfig = (config, tab, propertyName, defaultValue = '')
 };
 
 const retrieveContainerName = containerConfig =>
-	retrivePropertyFromConfig(containerConfig, 0, 'code', retrivePropertyFromConfig(containerConfig, 0, 'name', ''));
+	retrievePropertyFromConfig(containerConfig, 0, 'code', retrievePropertyFromConfig(containerConfig, 0, 'name', ''));
 const retrieveEntityName = entityConfig =>
-	retrivePropertyFromConfig(
+	retrievePropertyFromConfig(
 		entityConfig,
 		0,
 		'code',
-		retrivePropertyFromConfig(entityConfig, 0, 'collectionName', ''),
+		retrievePropertyFromConfig(entityConfig, 0, 'collectionName', ''),
 	);
-const retrieveUDF = containerConfig => retrivePropertyFromConfig(containerConfig, 1, 'UDFs', []);
-const retrieveUDA = containerConfig => retrivePropertyFromConfig(containerConfig, 2, 'UDAs', []);
-const retrieveIndexes = entityConfig => retrivePropertyFromConfig(entityConfig, 1, 'SecIndxs', []);
+const retrieveUDF = containerConfig => retrievePropertyFromConfig(containerConfig, 1, 'UDFs', []);
+const retrieveUDA = containerConfig => retrievePropertyFromConfig(containerConfig, 2, 'UDAs', []);
+const retrieveIndexes = entityConfig => retrievePropertyFromConfig(entityConfig, 1, 'SecIndxs', []);
 const getTableNameStatement = (keyspaceName, tableName) => getNameWithKeyspace(keyspaceName, `"${tableName}"`);
 const getNameWithKeyspace = (keyspaceName, name) => `${keyspaceName ? `"${keyspaceName}".` : ''}${name}`;
 
@@ -52,7 +52,7 @@ const getFieldConfig = (type, property) => {
 };
 
 const eachField = (jsonSchema, callback) => {
-	const resultSchema = Object.assign({}, jsonSchema);
+	const resultSchema = { ...jsonSchema };
 
 	const eachProperty = (properties, callback) => {
 		return Object.keys(properties).reduce((resultSchema, propertyName) => {
@@ -116,7 +116,7 @@ const commentDeactivatedStatement = (
 	return useMultiLineComment ? multiLineComment(statement) : insertBeforeEachLine(statement);
 };
 
-const retrieveIsItemActivated = itemConfig => retrivePropertyFromConfig(itemConfig, 0, 'isActivated', true);
+const retrieveIsItemActivated = itemConfig => retrievePropertyFromConfig(itemConfig, 0, 'isActivated', true);
 
 const getUserDefinedFunctions = udfItems => {
 	return udfItems
@@ -146,7 +146,7 @@ module.exports = {
 	retrieveUDF,
 	retrieveUDA,
 	retrieveIndexes,
-	retrivePropertyFromConfig,
+	retrievePropertyFromConfig,
 	getTableNameStatement,
 	getFieldConfig,
 	getTypeConfig,

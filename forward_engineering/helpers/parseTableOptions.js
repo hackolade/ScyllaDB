@@ -81,12 +81,12 @@ const transformDetailsOptions = option => {
 	};
 	const stringValue = getStringValue(option.value);
 	const trimmedValue = stringValue.replace(/\n/g, '');
+
 	return `${convertKeywordToTableOptionName(option['propertyKeyword'])} = ${changeQuotes(trimmedValue)}`;
 };
 
 const transformOtherOptions = option => {
-	const subOptionArray = option.value;
-	return subOptionArray
+	return option.value
 		.reduce((optionString, option) => {
 			const { name, value } = option;
 			if (!name || !value) {
@@ -129,15 +129,20 @@ const transformCachingOption = option => {
 
 		return null;
 	};
-	const createValueObject = (keys, rows) => Object.assign({}, keys && { keys }, rows && { rows_per_partition: rows });
+	const createValueObject = (keys, rows) => ({
+		...(keys && { keys }),
+		...(rows && { rows_per_partition: rows }),
+	});
 	const allowedValues = ['ALL', 'NONE'];
 	const keys = validateKeys(option.value['keys']);
 	const rows = validateRows(option.value['rowsPerPartition']);
+
 	if (!keys && !rows) {
 		return null;
 	}
 
 	const stringValue = JSON.stringify(createValueObject(keys, rows));
+
 	return `caching = ${changeQuotes(stringValue)}`;
 };
 
@@ -152,6 +157,7 @@ const generateOptionsStringReducer = (str, option) => {
 	}
 
 	const start = getStringStart(str);
+
 	return str.concat(`${start} ${optionString}\n`);
 };
 
@@ -170,6 +176,7 @@ const addId = (tableId, options) => {
 	}
 
 	const start = getStringStart(options);
+
 	return options.concat(`${start} ID = '${tableId}'\n`);
 };
 
@@ -187,6 +194,7 @@ const addClustering = (clusteringKeys, clusteringKeysHash, options) => {
 		})
 		.join(', ');
 	const start = getStringStart(options);
+
 	return options.concat(`${start} CLUSTERING ORDER BY (${fields})\n`);
 };
 
