@@ -26,7 +26,7 @@ const handleFileData = filePath => {
 
 module.exports = {
 	connect: function (connectionInfo, logger, cb, app) {
-		cassandraHelper(app.require('lodash'))
+		cassandraHelper()
 			.connect(
 				app,
 				logger,
@@ -66,7 +66,7 @@ module.exports = {
 	},
 
 	disconnect: function (connectionInfo, logger, cb, app) {
-		cassandraHelper(app.require('lodash')).close(app);
+		cassandraHelper().close(app);
 		cb();
 	},
 
@@ -85,7 +85,7 @@ module.exports = {
 
 				this.disconnect(connectionInfo, logger, () => {}, app);
 
-				return cb(cassandraHelper(app.require('lodash')).prepareError(error));
+				return cb(cassandraHelper().prepareError(error));
 			},
 			app,
 		);
@@ -96,7 +96,7 @@ module.exports = {
 
 		logInfo('Retrieving keyspaces and tables information', connectionInfo, logger);
 		const { includeSystemCollection } = connectionInfo;
-		const cassandra = cassandraHelper(app.require('lodash'));
+		const cassandra = cassandraHelper();
 
 		cassandra
 			.connect(
@@ -145,7 +145,7 @@ module.exports = {
 
 	getDbCollectionsData: function (data, logger, cb, app) {
 		const async = app.require('async');
-		const cassandra = cassandraHelper(app.require('lodash'));
+		const cassandra = cassandraHelper();
 		logger.log('info', data, 'Retrieving schema', data.hiddenKeys);
 
 		const tables = data.collectionData.collections;

@@ -503,7 +503,7 @@ module.exports = () => {
 	const getTableSchema = (columns, udtHash, sample = {}) => {
 		let schema = {};
 		columns.forEach(column => {
-			const columnType = typesHelper(_).getColumnType(column, udtHash, sample ? sample[column.name] : undefined);
+			const columnType = typesHelper().getColumnType(column, udtHash, sample ? sample[column.name] : undefined);
 			schema[column.name] = columnType;
 			schema[column.name].code = column.name;
 			schema[column.name].static = column.isStatic;
@@ -786,7 +786,7 @@ module.exports = () => {
 			}
 			packageData = {
 				...packageData,
-				documents: filterComplexUdt(_).filterUdts(schema.properties, data.records),
+				documents: filterComplexUdt().filterUdts(schema.properties, data.records),
 			};
 		} else if (!includeEmptyCollection) {
 			packageData = null;
