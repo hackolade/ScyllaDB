@@ -6,6 +6,8 @@ const {
 	retrieveIndexes,
 	commentDeactivatedStatement,
 	retrieveIsItemActivated,
+	getUserDefinedFunctions,
+	getUserDefinedAggregations,
 } = require('./generalHelper');
 const { getTableStatement } = require('./tableHelper');
 const { getUdtMap, getUdtScripts } = require('./udtHelper');
@@ -49,20 +51,7 @@ const getScript = structure => {
 	return structure.filter(item => item).join('\n\n');
 };
 
-const getUserDefinedFunctions = udfItems => {
-	return udfItems
-		.map(item => item.functionBody)
-		.filter(item => item)
-		.join('\n');
-};
-
-const getUserDefinedAggregations = udaItems => {
-	return udaItems
-		.map(item => item.storedProcFunction)
-		.filter(item => item)
-		.join('\n');
-};
-
 module.exports = {
+	getScript,
 	getCreateTableScript,
 };

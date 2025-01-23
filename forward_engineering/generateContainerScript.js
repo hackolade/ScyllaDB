@@ -6,6 +6,8 @@ const {
 	retrieveIndexes,
 	retrieveIsItemActivated,
 	commentDeactivatedStatement,
+	getUserDefinedFunctions,
+	getUserDefinedAggregations,
 } = require('./helpers/generalHelper');
 const { getTableStatement } = require('./helpers/tableHelper');
 const { sortUdt, getUdtMap, getUdtScripts, prepareDefinitions } = require('./helpers/udtHelper');
@@ -15,24 +17,7 @@ const { getAlterScript } = require('./helpers/updateHelper');
 const { getViewScript } = require('./helpers/viewHelper');
 const { getScriptOptions } = require('./helpers/getScriptOptions');
 const { initPluginConfiguration } = require('../helpers/levelConfigHelper');
-
-const getScript = structure => {
-	return structure.filter(item => item).join('\n\n');
-};
-
-const getUserDefinedFunctions = udfItems => {
-	return udfItems
-		.map(item => item.functionBody)
-		.filter(item => item)
-		.join('\n');
-};
-
-const getUserDefinedAggregations = udaItems => {
-	return udaItems
-		.map(item => item.storedProcFunction)
-		.filter(item => item)
-		.join('\n');
-};
+const { getScript } = require('./helpers/createHelper');
 
 function generateContainerScript(data, logger, callback, app) {
 	try {

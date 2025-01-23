@@ -72,7 +72,7 @@ const getClusteringKeys = (clusteringKeysHash, isParentActivated) => {
 
 const seedOptionsWithValues = (options, valueObject) =>
 	options.map(option => {
-		const value = valueObject[option['propertyKeyword']];
+		const value = valueObject[option['fieldKeyword']];
 		if (value === undefined) {
 			return option;
 		}
