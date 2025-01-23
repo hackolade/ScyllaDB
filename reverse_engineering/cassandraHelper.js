@@ -1,6 +1,6 @@
 const cassandra = require('cassandra-driver');
 const typesHelper = require('./typesHelper');
-let _;
+const _ = require('lodash');
 const fs = require('fs');
 const { createTableOptionsFromMeta } = require('./helpers/createTableOptionsFromMeta');
 const { getEntityLevelConfig } = require('../helpers/levelConfigHelper');
@@ -12,7 +12,7 @@ const state = {
 	isSshTunnel: false,
 };
 
-module.exports = _ => {
+module.exports = () => {
 	const requireKeyStore = app =>
 		new Promise((resolve, reject) => {
 			return app.require('java-ssl', (err, Keystore) => {
