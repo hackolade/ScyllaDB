@@ -1,5 +1,5 @@
 const { initPluginConfiguration } = require('../helpers/levelConfigHelper');
-const { isDropInStatements: containsDropScript } = require('./helpers/alterScriptBuilder');
+const { isDropInStatements: containsDropScript } = require('./helpers/updateHelper');
 const { sortUdt, prepareDefinitions } = require('./helpers/udtHelper');
 
 function isDropInStatements(data, logger, callback, app) {
