@@ -53,14 +53,14 @@ function generateContainerScript(data, logger, callback, app) {
 			const modelDefinitions = sortUdt(JSON.parse(data.modelDefinitions));
 			const externalDefinitions = JSON.parse(data.externalDefinitions);
 			const containerData = data.containerData;
-			let cqlScriptData = [];
+			const cqlScriptData = [];
 
 			const containerName = retrieveContainerName(containerData);
 			const keyspace = getKeyspaceStatement(containerData);
 			const isKeyspaceActivated = retrieveIsItemActivated(containerData);
 
 			const generalUdtTypeMap = getUdtMap([modelDefinitions, externalDefinitions]);
-			let generalUDT = getUdtScripts(
+			const generalUDT = getUdtScripts(
 				containerName,
 				[externalDefinitions, modelDefinitions],
 				generalUdtTypeMap,
@@ -113,8 +113,8 @@ function generateContainerScript(data, logger, callback, app) {
 				cqlScriptData.push(...internalUdt, table, indexes);
 			});
 
-			cqlScriptData = cqlScriptData.concat(
-				data.views.map(viewId => {
+			cqlScriptData.push(
+				...data.views.map(viewId => {
 					const viewSchema = JSON.parse(data.jsonSchema[viewId] || '{}');
 
 					return getViewScript({
