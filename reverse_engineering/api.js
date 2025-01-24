@@ -1,5 +1,4 @@
-'use strict';
-
+const async = require('async');
 const cassandraHelper = require('./cassandraHelper');
 const systemKeyspaces = require('./package').systemKeyspaces;
 const logHelper = require('./logHelper');
@@ -92,7 +91,7 @@ module.exports = {
 	},
 
 	getDbCollectionsNames: function (connectionInfo, logger, cb, app) {
-		const async = app.require('async');
+		initPluginConfiguration(connectionInfo.pluginConfiguration, logger);
 
 		logInfo('Retrieving keyspaces and tables information', connectionInfo, logger);
 		const { includeSystemCollection } = connectionInfo;
@@ -144,7 +143,8 @@ module.exports = {
 	},
 
 	getDbCollectionsData: function (data, logger, cb, app) {
-		const async = app.require('async');
+		initPluginConfiguration(data.pluginConfiguration, logger);
+
 		const cassandra = cassandraHelper();
 		logger.log('info', data, 'Retrieving schema', data.hiddenKeys);
 
