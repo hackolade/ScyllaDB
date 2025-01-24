@@ -1,6 +1,6 @@
 const cassandra = require('cassandra-driver');
 const typesHelper = require('./typesHelper');
-let _;
+const _ = require('lodash');
 const fs = require('fs');
 const { createTableOptionsFromMeta } = require('./helpers/createTableOptionsFromMeta');
 const { getEntityLevelConfig } = require('../helpers/levelConfigHelper');
@@ -12,7 +12,7 @@ const state = {
 	isSshTunnel: false,
 };
 
-module.exports = _ => {
+module.exports = () => {
 	const requireKeyStore = app =>
 		new Promise((resolve, reject) => {
 			return app.require('java-ssl', (err, Keystore) => {
@@ -503,7 +503,7 @@ module.exports = _ => {
 	const getTableSchema = (columns, udtHash, sample = {}) => {
 		let schema = {};
 		columns.forEach(column => {
-			const columnType = typesHelper(_).getColumnType(column, udtHash, sample ? sample[column.name] : undefined);
+			const columnType = typesHelper().getColumnType(column, udtHash, sample ? sample[column.name] : undefined);
 			schema[column.name] = columnType;
 			schema[column.name].code = column.name;
 			schema[column.name].static = column.isStatic;
@@ -583,7 +583,7 @@ module.exports = _ => {
 	};
 
 	const getOptionsFromTab = config => {
-		const optionsBlock = config.structure.find(prop => prop.propertyName === 'Options');
+		const optionsBlock = config.structure.find(prop => prop.fieldName === 'Options');
 		return optionsBlock.structure;
 	};
 
@@ -786,7 +786,7 @@ module.exports = _ => {
 			}
 			packageData = {
 				...packageData,
-				documents: filterComplexUdt(_).filterUdts(schema.properties, data.records),
+				documents: filterComplexUdt().filterUdts(schema.properties, data.records),
 			};
 		} else if (!includeEmptyCollection) {
 			packageData = null;

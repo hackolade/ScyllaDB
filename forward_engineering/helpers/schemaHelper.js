@@ -34,13 +34,13 @@ const getPathById = (schema, id, path) => {
 			return schema.items.reduce((newPath, item) => {
 				if (newPath) {
 					return newPath;
-				} else {
-					return getPathById(item, id, [...path, item.GUID || item.id]);
 				}
+
+				return getPathById(item, id, [...path, item.GUID || item.id]);
 			}, undefined);
-		} else {
-			return getPathById(schema.items, id, [...path, schema.items.GUID]);
 		}
+
+		return getPathById(schema.items, id, [...path, schema.items.GUID]);
 	}
 };
 
@@ -57,22 +57,21 @@ const getRootItemMetadataById = (id, properties) => {
 };
 
 const findFieldMetadataById = (id, source) => {
-	let path = getPathById(source, id, []);
+	const path = getPathById(source, id, []);
 
 	if (path) {
 		return getRootItemMetadataById(path[0], source.properties);
-	} else {
-		return { name: '' };
 	}
+
+	return { name: '' };
 };
 
 const getAttributesDataByIds = (ids, sources) => {
 	return ids.reduce((hash, id) => {
-		for (let i = 0; i < sources.length; i++) {
-			const fieldData = findFieldMetadataById(id, sources[i]);
-
+		for (const source of sources) {
+			const fieldData = findFieldMetadataById(id, source);
 			if (fieldData?.name) {
-				return Object.assign({}, hash, { [id]: fieldData });
+				return { ...hash, [id]: fieldData };
 			}
 		}
 

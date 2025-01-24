@@ -37,7 +37,7 @@ const handleCashingOption = tableMeta => {
 };
 
 const generateTableOptionsReducer = tableMeta => (options, configOption) => {
-	const optionName = configOption.propertyKeyword;
+	const optionName = configOption.fieldKeyword;
 	if (specialOptions.includes(optionName)) {
 		const specialOptionValue = handleSpecialOption(optionName, tableMeta);
 		return Object.assign({}, options, { [optionName]: specialOptionValue });

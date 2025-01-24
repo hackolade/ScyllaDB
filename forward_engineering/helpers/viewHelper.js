@@ -1,17 +1,12 @@
-'use strict';
-
-let _;
-const { dependencies } = require('./appDependencies');
+const _ = require('lodash');
 const { commentDeactivatedStatement, INLINE } = require('./commentsHelper');
 const {
 	retrieveContainerName,
 	retrieveEntityName,
-	retrivePropertyFromConfig,
+	retrievePropertyFromConfig,
 	retrieveIsItemActivated,
 } = require('./generalHelper');
 const { getOptions, getPrimaryKeyList } = require('./tableHelper');
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const getColumnNames = ({ columnsDefinitions, isParentActivated = true }) => {
 	const firstActiveIndex = columnsDefinitions.findIndex(item => item.isActivated);
@@ -62,17 +57,20 @@ const getWhereStatement = ({ primaryKeysNames, columnsDefinitions, isParentActiv
 const getNamesByIds = (collectionRefsDefinitionsMap, ids) => {
 	return ids.reduce((hash, id) => {
 		const name = _.get(collectionRefsDefinitionsMap, [id, 'name']);
+
 		if (!name) {
 			return hash;
 		}
-		return Object.assign({}, hash, {
+
+		return {
+			...hash,
 			[id]: { name: name },
-		});
+		};
 	}, {});
 };
 
 const getClusteringKeyData = (collectionRefsDefinitionsMap, viewData) => {
-	const clusteringKeys = retrivePropertyFromConfig(viewData, 0, 'compositeClusteringKey', []);
+	const clusteringKeys = retrievePropertyFromConfig(viewData, 0, 'compositeClusteringKey', []);
 
 	const clusteringKeysHash = getNamesByIds(
 		collectionRefsDefinitionsMap,
@@ -83,7 +81,7 @@ const getClusteringKeyData = (collectionRefsDefinitionsMap, viewData) => {
 };
 
 const getPrimaryKeysNames = (collectionRefsDefinitionsMap, viewData) => {
-	const partitionKeys = retrivePropertyFromConfig(viewData, 0, 'compositePartitionKey', []);
+	const partitionKeys = retrievePropertyFromConfig(viewData, 0, 'compositePartitionKey', []);
 	const partitionKeysHash = getNamesByIds(
 		collectionRefsDefinitionsMap,
 		partitionKeys.map(key => key.keyId),
@@ -95,7 +93,7 @@ const getPrimaryKeysNames = (collectionRefsDefinitionsMap, viewData) => {
 };
 
 const getPrimaryKeyScript = (collectionRefsDefinitionsMap, viewData, isParentActivated) => {
-	const partitionKeys = retrivePropertyFromConfig(viewData, 0, 'compositePartitionKey', []);
+	const partitionKeys = retrievePropertyFromConfig(viewData, 0, 'compositePartitionKey', []);
 	const partitionKeysHash = getNamesByIds(
 		collectionRefsDefinitionsMap,
 		partitionKeys.map(key => key.keyId),
@@ -113,10 +111,9 @@ const getPrimaryKeyScript = (collectionRefsDefinitionsMap, viewData, isParentAct
 const addTab = script => _.trim(script || '').replace(/  /g, '    ');
 
 const getOptionsScript = (collectionRefsDefinitionsMap, viewData) => {
-	setDependencies(dependencies);
 	const clusteringKeyData = getClusteringKeyData(collectionRefsDefinitionsMap, viewData);
-	const tableComment = retrivePropertyFromConfig(viewData, 0, 'comments', '');
-	const tableOptions = retrivePropertyFromConfig(viewData, 0, 'tableOptions', '');
+	const tableComment = retrievePropertyFromConfig(viewData, 0, 'comments', '');
+	const tableOptions = retrievePropertyFromConfig(viewData, 0, 'tableOptions', '');
 
 	return addTab(
 		getOptions(
@@ -139,7 +136,6 @@ module.exports = {
 		collectionRefsDefinitionsMap,
 		isKeyspaceActivated = true,
 	}) {
-		setDependencies(dependencies);
 		let script = [];
 		const columns = schema.properties || {};
 		const view = _.first(viewData) || {};

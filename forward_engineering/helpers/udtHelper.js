@@ -17,7 +17,13 @@ const getUdtScripts = (keyspaceName, sources, udtMap, isParentActivated) => {
 
 const setFrozenForAllUdt = udtTypeMap => {
 	return Object.keys(udtTypeMap).reduce((typeMap, typeName) => {
-		return Object.assign(typeMap, { [typeName]: Object.assign({}, udtTypeMap[typeName], { frozen: true }) });
+		return {
+			...typeMap,
+			[typeName]: {
+				...udtTypeMap[typeName],
+				frozen: true,
+			},
+		};
 	}, {});
 };
 
@@ -74,10 +80,10 @@ const sortUdt = definitionJsonSchema => {
 	}
 
 	const udtNames = Object.keys(definitionJsonSchema.properties);
-	let orderedUdtNames = [];
+	const orderedUdtNames = [];
 
 	udtNames.forEach(udtName => {
-		let references = [];
+		const references = [];
 
 		eachField(definitionJsonSchema.properties[udtName], field => {
 			if (field.$ref) {
@@ -112,7 +118,7 @@ const sortUdt = definitionJsonSchema => {
 
 	orderedUdtNames.forEach(udtName => {
 		if (definitionJsonSchema.properties[udtName]) {
-			properties[udtName] = Object.assign({}, definitionJsonSchema.properties[udtName]);
+			properties[udtName] = { ...definitionJsonSchema.properties[udtName] };
 		}
 	});
 
@@ -125,6 +131,7 @@ const prepareDefinitions = data => {
 	const modelDefinitions = sortUdt(JSON.parse(data.modelDefinitions));
 	const externalDefinitions = JSON.parse(data.externalDefinitions);
 	const udtTypeMap = getUdtMap([modelDefinitions, externalDefinitions]);
+
 	return { udtTypeMap, modelDefinitions, externalDefinitions };
 };
 

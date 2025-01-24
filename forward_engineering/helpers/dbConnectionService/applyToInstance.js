@@ -1,6 +1,6 @@
 const applyToInstance = cassandraHelper => (connectionInfo, logger, app) => {
 	const script = connectionInfo.script;
-	const cassandra = cassandraHelper(app.require('lodash'));
+	const cassandra = cassandraHelper();
 
 	return cassandra
 		.connect(app)(connectionInfo)
@@ -87,9 +87,10 @@ const modifyLineError = (error, wholeScript, query) => {
 	const lineOffset = wholeScript.slice(0, i).split('\n').length;
 
 	if (!lineRegExp.test(error.message)) {
-		return Object.assign({}, error, {
+		return {
+			...error,
 			message: `query line ${lineOffset}:0 ${error.message}`,
-		});
+		};
 	}
 
 	const lineData = error.message.match(lineRegExp);
@@ -98,7 +99,7 @@ const modifyLineError = (error, wholeScript, query) => {
 
 	const message = error.message.replace(lineRegExp, `line ${lineOffset + line - 1}:${offset}`);
 
-	return Object.assign({}, error, { message });
+	return { ...error, message };
 };
 
 module.exports = applyToInstance;

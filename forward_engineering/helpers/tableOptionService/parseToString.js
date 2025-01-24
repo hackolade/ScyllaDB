@@ -1,8 +1,5 @@
+const _ = require('lodash');
 const { inlineComment } = require('../commentsHelper');
-const { dependencies } = require('../appDependencies');
-let _;
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const NUMERIC = 'numeric';
 const TEXT = 'text';
@@ -38,7 +35,7 @@ const convertKeywordToTableOptionName = keyword => {
 };
 
 const transformOption = option => {
-	if (specialOptions.includes(option.propertyKeyword)) {
+	if (specialOptions.includes(option.fieldKeyword)) {
 		return transformSpecialOption(option);
 	}
 
@@ -46,7 +43,7 @@ const transformOption = option => {
 };
 
 const transformSpecialOption = option => {
-	switch (option.propertyKeyword) {
+	switch (option.fieldKeyword) {
 		case CACHING:
 			return transformCachingOption(option);
 		case OTHER:
@@ -57,7 +54,7 @@ const transformSpecialOption = option => {
 };
 
 const transformOptionByPropertyType = option => {
-	switch (option.propertyType) {
+	switch (option.fieldType) {
 		case TEXT:
 			return transformTextOption(option);
 		case CHECKBOX:
@@ -71,11 +68,9 @@ const transformOptionByPropertyType = option => {
 	}
 };
 
-const transformTextOption = option =>
-	`${convertKeywordToTableOptionName(option['propertyKeyword'])} = '${option.value}'`;
+const transformTextOption = option => `${convertKeywordToTableOptionName(option['fieldKeyword'])} = '${option.value}'`;
 
-const transformNumericOption = option =>
-	`${convertKeywordToTableOptionName(option['propertyKeyword'])} = ${option.value}`;
+const transformNumericOption = option => `${convertKeywordToTableOptionName(option['fieldKeyword'])} = ${option.value}`;
 
 const transformDetailsOptions = option => {
 	const getStringValue = value => {
@@ -87,7 +82,8 @@ const transformDetailsOptions = option => {
 	};
 	const stringValue = getStringValue(option.value);
 	const trimmedValue = stringValue.replace(/\n/g, '');
-	return `${convertKeywordToTableOptionName(option['propertyKeyword'])} = ${changeQuotes(trimmedValue)}`;
+
+	return `${convertKeywordToTableOptionName(option['fieldKeyword'])} = ${changeQuotes(trimmedValue)}`;
 };
 
 const transformOtherOptions = option => {
@@ -106,7 +102,7 @@ const transformOtherOptions = option => {
 };
 
 const transformBooleanOption = option => {
-	const keyword = option['propertyKeyword'];
+	const keyword = option['fieldKeyword'];
 	if (!Boolean(option.value)) {
 		return null;
 	}
@@ -135,15 +131,21 @@ const transformCachingOption = option => {
 
 		return null;
 	};
-	const createValueObject = (keys, rows) => Object.assign({}, keys && { keys }, rows && { rows_per_partition: rows });
+	const createValueObject = (keys, rows) => ({
+		...(keys && { keys }),
+		...(rows && { rows_per_partition: rows }),
+	});
+
 	const allowedValues = ['ALL', 'NONE'];
 	const keys = validateKeys(option.value['keys']);
 	const rows = validateRows(option.value['rowsPerPartition']);
+
 	if (!keys && !rows) {
 		return null;
 	}
 
 	const stringValue = JSON.stringify(createValueObject(keys, rows));
+
 	return `caching = ${changeQuotes(stringValue)}`;
 };
 
@@ -158,6 +160,7 @@ const generateOptionsStringReducer = (str, option) => {
 	}
 
 	const start = getStringStart(str);
+
 	return str.concat(`${start} ${optionString}\n`);
 };
 
@@ -176,12 +179,11 @@ const addId = (tableId, options) => {
 	}
 
 	const start = getStringStart(options);
+
 	return options.concat(`${start} ID = '${tableId}'\n`);
 };
 
 const addClustering = (clusteringKeys, clusteringKeysHash, options, isParentActivated) => {
-	setDependencies(dependencies);
-
 	if (!clusteringKeys.length) {
 		return options;
 	}
@@ -212,6 +214,7 @@ const addClustering = (clusteringKeys, clusteringKeysHash, options, isParentActi
 	}
 
 	const start = getStringStart(options);
+
 	return options.concat(`${start} CLUSTERING ORDER BY (${fields})\n`);
 };
 

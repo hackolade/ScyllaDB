@@ -13,10 +13,11 @@ module.exports = {
 
 				if (typeDefinition === undefined) {
 					return '';
-				} else {
-					const columnStatement = getColumn(data.code || name, typeDefinition, isStatic(data));
-					return commentDeactivatedStatement(columnStatement, data.isActivated, isParentActivated, false);
 				}
+
+				const columnStatement = getColumn(data.code || name, typeDefinition, isStatic(data));
+
+				return commentDeactivatedStatement(columnStatement, data.isActivated, isParentActivated, false);
 			})
 			.filter(column => column);
 

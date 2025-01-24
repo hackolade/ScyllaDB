@@ -1,18 +1,14 @@
+const _ = require('lodash');
 const { getTypeByData } = require('../typeHelper');
 const { getNamesByIds } = require('../schemaHelper');
-const { dependencies } = require('../appDependencies');
 const { eachField, getTableNameStatement } = require('../generalHelper');
 const { getTableStatement } = require('../tableHelper');
-
-let _;
 
 let existScript = {
 	modifiedColumn: [],
 	addTable: [],
 	deleteTable: [],
 };
-
-const setDependencies = ({ lodash }) => (_ = lodash);
 
 const removeColumnStatement = columnName => `DROP "${columnName}";`;
 const addColumnStatement = columnData => `ADD "${columnData.name}" ${columnData.type}`;
@@ -26,6 +22,7 @@ const getAdd = addData => {
 	}
 
 	const script = `${alterTablePrefix(addData.tableName, addData.keyspaceName)} ${addColumnStatement(addData.columnData)};`;
+
 	return [
 		{
 			deleted: false,
@@ -43,6 +40,7 @@ const getDelete = deleteData => {
 	}
 
 	const script = `${alterTablePrefix(deleteData.tableName, deleteData.keyspaceName)} ${removeColumnStatement(deleteData.columnData.name)}`;
+
 	return [
 		{
 			added: false,
@@ -57,6 +55,7 @@ const getDelete = deleteData => {
 const generateFullName = data => {
 	const { tableName, keyspaceName, columnData } = data;
 	const fulTableName = getTableNameStatement(keyspaceName, tableName);
+
 	return columnData?.name ? `${fulTableName}.${columnData?.name}` : fulTableName;
 };
 
@@ -99,6 +98,7 @@ const prepareField = (field, dataSources) => {
 		}
 
 		const preparedField = getNamesByIds([_.last(field.refIdPath)], dataSources)[_.last(field.refIdPath)] || {};
+
 		return {
 			...field,
 			...preparedField,
@@ -107,7 +107,6 @@ const prepareField = (field, dataSources) => {
 };
 
 const hydrateColumn = ({ tableName, keyspaceName, isOldModel, property, udtMap, dataSources }) => {
-	setDependencies(dependencies);
 	const { oldField = {}, newField = {} } = property?.compMod || {};
 	const preparedOldField = prepareField(oldField, dataSources);
 	const newType = getTypeByData(property, udtMap, newField.name);
@@ -186,8 +185,6 @@ const tableKeysIsEqual = ({ newKeys = [], oldKeys = [], dataSources }) => {
 };
 
 const isTableChange = ({ item, dataSources }) => {
-	setDependencies(dependencies);
-
 	const compMod = item?.role?.compMod || {};
 	const tableProperties = ['name', 'isActivated'];
 	const { compositeClusteringKey = {}, compositePartitionKey = {} } = compMod || {};
