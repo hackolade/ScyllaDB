@@ -6,6 +6,7 @@ const { createTableOptionsFromMeta } = require('./helpers/createTableOptionsFrom
 const { getEntityLevelConfig } = require('../helpers/levelConfigHelper');
 const CassandraRetryPolicy = require('./cassandraRetryPolicy');
 const filterComplexUdt = require('./helpers/filterComplexUdt');
+const { escapeV6IpForURL } = require('./helpers/escapeV6IPForURL');
 
 const state = {
 	client: null,
@@ -271,7 +272,7 @@ module.exports = () => {
 		const username = info.user;
 		const password = info.password;
 		const authProvider = new cassandra.auth.PlainTextAuthProvider(username, password);
-		const contactPoints = info.hosts.map(item => `${item.host}:${item.port}`);
+		const contactPoints = info.hosts.map(item => `${escapeV6IpForURL({ host: item.host })}:${item.port}`);
 		const readTimeout = validateRequestTimeout(info.requestTimeout, info.queryRequestTimeout);
 
 		return getSslOptions(info, app, logger).then(sslOptions => {
