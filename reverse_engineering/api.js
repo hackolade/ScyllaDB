@@ -1,7 +1,6 @@
 const async = require('async');
 const cassandraHelper = require('./cassandraHelper');
 const systemKeyspaces = require('./package').systemKeyspaces;
-const logHelper = require('./logHelper');
 const commandsService = require('./commandsService');
 const fs = require('fs');
 const antlr4 = require('antlr4');
@@ -284,7 +283,6 @@ module.exports = {
 
 const logInfo = (step, connectionInfo, logger) => {
 	logger.clear();
-	logger.log('info', logHelper.getSystemInfo(connectionInfo.appVersion), step);
 	logger.log('info', connectionInfo, 'connectionInfo', connectionInfo.hiddenKeys);
 };
 
