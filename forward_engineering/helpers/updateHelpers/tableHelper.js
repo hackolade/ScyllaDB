@@ -132,11 +132,6 @@ const hydrateColumn = ({ tableName, keyspaceName, isOldModel, property, udtMap, 
 	};
 };
 
-const getTableParameter = (item, key) => {
-	const parameter = item?.role?.compMod?.[key];
-	return parameter?.new || item?.role?.[key];
-};
-
 const addToKeysHashType = (keysHash, keys) => {
 	return Object.entries(keysHash).reduce((keysHash, [id, key]) => {
 		const type = (keys.find(key => key.keyId === id) || {}).type;
@@ -229,8 +224,8 @@ const getAddTable = addTableData => {
 	}
 	let table = addTableData.item;
 	const data = addTableData.data;
-	const compositePartitionKey = getTableParameter(table, 'compositePartitionKey') || [];
-	const compositeClusteringKey = getTableParameter(table, 'compositeClusteringKey') || [];
+	const compositePartitionKey = table?.role?.compMod?.compositePartitionKey?.new || [];
+	const compositeClusteringKey = table?.role?.compMod?.compositeClusteringKey?.new || [];
 
 	const entityData = [
 		{
@@ -270,7 +265,6 @@ module.exports = {
 	alterTablePrefix,
 	hydrateColumn,
 	isTableChange,
-	getTableParameter,
 	addScriptToExistScripts,
 	getDeleteTable,
 	getAddTable,
